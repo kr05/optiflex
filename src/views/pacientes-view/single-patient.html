@@ -1,0 +1,72 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="single-patient">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                padding: 16px;
+                border-bottom: 1px solid var(--light-border);
+                align-items: center;
+            }
+
+            .details-container {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: space-around;
+            }
+
+            .subtitle {
+                font-size: 14px;
+            }
+
+            .profile-picture {
+                width: 40px;
+                height: 40px;
+                background: var(--image-background-color);
+                border-radius: 50%;
+                margin-right: 16px;
+                object-fit: cover;
+            }
+        </style>
+
+        <img src={{patient.image}} class=profile-picture></img>
+        <div class=details-container>
+            <div>{{patient.name}}</div>
+            <div class=subtitle>{{patient.email}}</div>
+        </div>
+
+    </template>
+
+    <script>
+        /**
+         * `single-patient` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SinglePatient extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'single-patient';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    patient: Object
+                };
+            }
+
+        }
+
+        window.customElements.define(SinglePatient.is, SinglePatient);
+    </script>
+</dom-module>

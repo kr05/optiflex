@@ -1,0 +1,72 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+
+<dom-module id="agave-fab">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            paper-fab {
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+            }
+        </style>
+
+        <template is="dom-if" if={{_computeFabVisibility(drawerOpen,page)}}>
+            <paper-fab icon="my-icons:add" on-click="_onFabClick"></paper-fab>
+        </template>
+
+    </template>
+
+    <script>
+        /**
+         * `agave-fab` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AgaveFab extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'agave-fab';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    drawerOpen: Boolean,
+                    page: String
+                };
+            }
+            
+            _computeFabVisibility(drawerOpen, page) {
+                return ((page==='pacientes' || page==='usuarios') && !drawerOpen)
+            }
+
+            _onFabClick(e) {
+                switch (this.page) {
+                    case 'pacientes':
+                        this.dispatchEvent(new CustomEvent('open-dialog', {detail: {type: 'create', subType: 'patient'}}));
+                        break;
+                    case 'usuarios':
+                        this.dispatchEvent(new CustomEvent('open-dialog', {detail: {type: 'create', subType: 'user'}}));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+        }
+
+        window.customElements.define(AgaveFab.is, AgaveFab);
+    </script>
+</dom-module>

@@ -1,0 +1,420 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-progress/paper-progress.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../../agave-components/agave-dialog-toolbar/agave-dialog-toolbar.html">
+
+<link rel="import" href="../../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-from-bottom-animation.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-down-animation.html">
+
+<link rel="import" href="../shared-dialog-styles\shared-dialog-styles.html">
+
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+
+<dom-module id="details-user-dialog">
+    <template>
+        <style include="shared-dialog-styles">
+            :host {
+                display: block
+            }
+
+            .image-container {
+                height: 280px;
+                width: 100%;
+                margin-top: 8px;
+                background-color: #c4c4c4;
+            }
+
+            .image {
+                height: 100%;
+                width: 100%;
+                object-fit: cover;
+            }
+
+            paper-fab {
+                position: relative;
+                left: calc(100% - 72px);
+                top: -110px;
+            }
+
+            #fileInput {
+                display: none;
+            }
+
+            .info-container {
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            }
+
+            .option-buttons {
+                display: flex;
+                padding: 0;
+                margin: 0;
+                justify-content: flex-start;
+                height: 60px;
+                text-transform: capitalize;
+            }
+
+            .option-buttons iron-icon {
+                padding: 8px;
+                margin-right: 16px;
+                margin-left: 8px;
+                color: var(--dark-primary-color);
+            }
+
+            .info-item-input {
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-input: {
+                    font-size: 14px;
+                };
+                flex: 1;
+                padding-right: 8px;
+                --paper-input-container-label-focus: {
+                    color: var(--secondary-text-color);
+                };
+            }
+
+            .info-name-edit {
+                position: relative;
+                bottom: 73px;
+                --paper-input-container-input-color: #fafafa;
+                --paper-input-container-input: {
+                    font-weight: bold;
+                    font-size: 30px;
+                    background-color: rgba(0, 0, 0, 0.30);
+                };
+                --paper-input-container-label: {
+                    background-color: rgba(0, 0, 0, 0.30);
+                    color: #fafafa;
+                };
+                --paper-input-container-label-focus: {
+                    color: #fafafa;
+                };
+            }
+
+            .info-name-input {
+                position: relative;
+                bottom: 73px;
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-input-color: #fafafa;
+                --paper-input-container-input: {
+                    font-weight: bold;
+                    font-size: 30px;
+                    background-color: rgba(0, 0, 0, 0.30);
+                    /* padding-left: 8px; */
+                };
+                --paper-input-container-label: {
+                    /* padding-left: 8px; */
+                    background-color: rgba(0, 0, 0, 0.30);
+                    color: #fafafa;
+                };
+                --paper-input-container-label-focus: {
+                    color: #fafafa;
+                };
+            }
+
+            paper-progress {
+                width: 100%;
+            }
+
+            .delete-btn {
+                color: whitesmoke;
+                background-color: var(--accent-color);
+            }
+
+            .cancel-btn {
+                color: var(--app-primary-color);
+            }
+        </style>
+
+        <input type="file" accept="image/*" on-change="_onImageUploaded" id="fileInput">
+            
+        <paper-dialog modal id=dialog opened={{opened}}>
+            
+            <agave-dialog-toolbar waiting={{waiting}} type=details class=toolbar edit-state={{editState}}
+                on-cancel="cancelDialog"
+                on-edit="editUser"
+                on-menu="openMenu"
+                on-submit="submitChanges">
+            </agave-dialog-toolbar>
+            <paper-dialog-scrollable>
+                <div class=image-container>
+                    <paper-progress class="blue" value="{{uploadProgress}}"></paper-progress>
+                    
+                    <template is="dom-if" if={{!editState}}>
+                        <img class=image src="{{data.image}}"></img>
+                        <paper-input always-float-label label=Nombre class="info-name-input" value={{data.name}} readonly></paper-input>
+                    </template>
+                    
+                    <template is="dom-if" if={{editState}}>
+                        <img class=image src="{{tmpUser.image}}"></img>
+                        <paper-input always-float-label label=Nombre class="info-name-edit" value={{tmpUser.name}}></paper-input>
+                        <paper-fab icon="my-icons:camera" on-click="_onCameraFabClick"></paper-fab>
+                    </template>
+                    
+                </div>
+
+                <div class="info-container">
+                    <div class=header>Informacion</div>
+
+                    <div class=info-item><paper-icon-button class=info-icon icon="my-icons:account"></paper-icon-button><paper-input always-float-label readonly label="Tipo de usuario" class=info-item-input value={{data.accountType}}></paper-input></div>
+                    <template is="dom-if" if={{!editState}}>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:phone"></paper-icon-button><paper-input always-float-label readonly label="Telefono" class=info-item-input value={{data.phone}} type=tel></paper-input></div>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:location"></paper-icon-button><paper-input always-float-label readonly label="Direccion" class=info-item-input value={{data.address}}></paper-input></div>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:mail"></paper-icon-button><paper-input always-float-label readonly label="Correo electronico" class=info-item-input value={{data.email}} type=email></paper-input></div>    
+                    </template>
+                    
+                    
+                    <template is="dom-if" if={{editState}}>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:phone"></paper-icon-button><paper-input always-float-label label="Telefono" class=info-item-edit value={{tmpUser.phone}} type=tel></paper-input></div>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:location"></paper-icon-button><paper-input always-float-label label="Direccion" class=info-item-edit value={{tmpUser.address}}></paper-input></div>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:mail"></paper-icon-button><paper-input always-float-label label="Correo electronico" class=info-item-edit value={{tmpUser.email}} type=email></paper-input></div>    
+                    </template>
+                    
+                    
+                </div>
+
+
+            </paper-dialog-scrollable>
+        </paper-dialog>
+
+        <paper-dialog id=confirmDialog>
+            <h2>Borrar usuario</h2>
+            <div>¿Seguro que deseas borrar al usuario? Esta accion no puede ser revertida.</div>
+            <div class=buttons>
+                <paper-button class=cancel-btn on-tap=closeConfirmDialog>Mejor no</paper-button>
+                <paper-button class=delete-btn on-tap=deleteUser>Borrar usuario</paper-button>
+            </div>
+        </paper-dialog>
+
+
+        <paper-dialog entry-animation="slide-from-bottom-animation" exit-animation="slide-down-animation" with-backdrop id=bottomMenu>
+            <paper-button class=option-buttons on-click="_onDeleteUser"><iron-icon icon="my-icons:delete"></iron-icon><span>Borrar usuario</span></paper-button>
+        </paper-dialog>
+
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+        
+
+    </template>
+
+    <script>
+        /**
+         * `details-user-dialog` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class DetailsUserDialog extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'details-user-dialog';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    id: {
+                        type: String,
+                        notify: true
+                    },
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    editState: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    data: {
+                        type: Object,
+                        doc: 'users/{id}',
+                        live: true
+                    },
+                    tmpUser: Object,
+                    uploadProgress: {
+                        type: Number,
+                        value: 0
+                    },
+                    waiting: {
+                        type: Boolean,
+                        value: false
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '_openedObserver(opened)',
+                    '_editStateObserver(editState)',
+                ];
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.dialog;
+                });
+            }
+
+            _openedObserver(opened) {
+                if (!opened) this.set('uploadProgress', 0);
+            }
+
+            _editStateObserver(editState) {
+                if (editState) {
+                    this._fillTmpValues();
+                } else {
+                    this._clearTmpValues();
+                }
+            }
+
+            _fillTmpValues() {
+                this.tmpUser = this.data;
+            }
+            
+            _clearTmpValues() {
+                this.tmpUser = null; 
+                this.uploadProgress = 0;          
+            }
+
+            openMenu(e) {
+                this.$.bottomMenu.open();
+            }
+
+            closeMenu(e) {
+                this.$.bottomMenu.close();
+            }
+
+            editUser(e) {
+                this.editState = true;
+            }
+
+            _onDeleteUser(e) {
+                this.closeMenu();
+                this.$.confirmDialog.open();
+            }
+            
+            closeConfirmDialog(e) {
+                this.$.confirmDialog.close();
+            }
+
+            cancelDialog() {
+                if (this.editState) {
+                    this.editState = false;
+                    return;
+                }
+                this.opened = false;
+            }
+
+            _onCameraFabClick(e) {
+                this.$.fileInput.click();
+            }
+
+            _onImageUploaded(e) {
+                let file = null;
+                let fileList = e.target.files;
+                for (let i = 0; i < fileList.length; i++) {
+                    if (fileList[i].type.match(/^image\//)) {
+                        file = fileList[i];
+                        break;
+                    }
+                }
+
+                if (file !== null) {
+                    let url = URL.createObjectURL(file);
+                    var storage = firebase.storage();
+                    var storageRef = storage.ref();
+                    var associateImagesRef = storageRef.child(`userProfilePictures/${this.id}/${file.name}`);
+                    this.uploadProgress = associateImagesRef;
+                    
+                    var uploadTask = associateImagesRef.put(file);
+
+                    uploadTask.on('state_changed', snapshot => {
+                        var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log('upload progress: ', progress);
+                        this.uploadProgress = progress;
+
+                        switch (snapshot.state) {
+                            case firebase.storage.TaskState.PAUSED: // or 'paused'
+                                console.log('Upload is paused');
+                                break;
+                            case firebase.storage.TaskState.RUNNING: // or 'running'
+                                console.log('Upload is running');
+                                break;
+                        }
+                    }, err => {
+                        console.log('image unable to be uploaded:', err);
+                    }, () => {
+                        this.tmpUser.image = uploadTask.snapshot.downloadURL;
+                        this.$.toast.text = 'Su imagen a sido guardada exitosamente.';
+                        this.$.toast.open();
+                    });
+                }
+            }
+
+            submitChanges(e) {
+                this.waiting = true;
+                var updatedUser = this.tmpUser;
+                console.log('updating user:', updatedUser);
+
+                Object.keys(updatedUser).forEach(key => {
+                if(updatedUser[key] === undefined) updatedUser[key] = null;
+                });
+                delete updatedUser['__id__'];
+
+                var db = firebase.firestore();
+                db.doc(`users/${this.id}`).update(updatedUser).then(response => {
+                    console.log('user update successful!');
+                    this.waiting = false;
+                    this.$.toast.text = 'Sus cambios han sido guardados.';
+                    this.$.toast.open();
+                    this.editState = false;
+                }).catch(err => {
+                    console.log('user update ERROR:', err);
+                    this.waiting = false;
+                });
+            }
+
+            _onDeleteUser(e) {
+                console.log('deleting user...')
+                var db = firebase.firestore();
+                return db.doc(`users/${this.id}`).delete().then(response => {
+                    console.log('user delete SUCCESS:', response);
+                    this.closeConfirmDialog();
+                    this.cancelDialog();
+                }).catch(err => {
+                    console.log('user delete ERROR:', err)
+                });
+            }
+
+        }
+
+        window.customElements.define(DetailsUserDialog.is, DetailsUserDialog);
+    </script>
+</dom-module>

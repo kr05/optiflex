@@ -1,0 +1,578 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-progress/paper-progress.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../../agave-components/agave-dialog-toolbar/agave-dialog-toolbar.html">
+<link rel="import" href="../../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-from-bottom-animation.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-down-animation.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="../../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../shared-dialog-styles\shared-dialog-styles.html">
+
+<dom-module id="details-patient-dialog">
+    <template>
+        <style include="shared-dialog-styles">
+            :host {
+                display: block
+            }
+
+            .image-container {
+                height: 280px;
+                width: 100%;
+                margin-top: 8px;
+                background-color: #c4c4c4;
+            }
+
+            .image {
+                height: 100%;
+                width: 100%;
+                object-fit: cover;
+            }
+
+            paper-fab {
+                position: relative;
+                left: calc(100% - 72px);
+                top: -110px;
+            }
+
+            #fileInput {
+                display: none;
+            }
+
+            .payment-header {
+                font-size: 24px;
+                padding: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .service-header {
+                font-size: 24px;
+                padding: 24px 24px 0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .subtitle {
+                font-size: 13px;
+                color: rgba(0, 0, 0, 0.54);
+            }
+
+            .info-container, .tests-container, .receipts-container, .services-container {
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            }
+
+            .single-test {
+                padding: 16px;
+                display: flex;
+                align-items: center;
+            }
+
+            .info-item-input {
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-input: {
+                    font-size: 14px;
+                };
+                flex: 1;
+                padding-right: 8px;
+                --paper-input-container-label-focus: {
+                    color: var(--secondary-text-color);
+                };
+            }
+
+            .info-name-edit {
+                position: relative;
+                bottom: 73px;
+                --paper-input-container-input-color: #fafafa;
+                --paper-input-container-input: {
+                    font-weight: bold;
+                    font-size: 30px;
+                    background-color: rgba(0, 0, 0, 0.30);
+                };
+                --paper-input-container-label: {
+                    background-color: rgba(0, 0, 0, 0.30);
+                    color: #fafafa;
+                };
+                --paper-input-container-label-focus: {
+                    color: #fafafa;
+                };
+            }
+
+            .info-name-input {
+                position: relative;
+                bottom: 73px;
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container-input-color: #fafafa;
+                --paper-input-container-input: {
+                    font-weight: bold;
+                    font-size: 30px;
+                    background-color: rgba(0, 0, 0, 0.30);
+                    /* padding-left: 8px; */
+                };
+                --paper-input-container-label: {
+                    /* padding-left: 8px; */
+                    background-color: rgba(0, 0, 0, 0.30);
+                    color: #fafafa;
+                };
+                --paper-input-container-label-focus: {
+                    color: #fafafa;
+                };
+            }
+
+            .empty-view {
+                height: 72px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+            }
+
+            .main-text {
+                font-weight: 500px;
+            }
+
+            .option-buttons {
+                display: flex;
+                padding: 0;
+                margin: 0;
+                justify-content: flex-start;
+                height: 60px;
+                text-transform: capitalize;
+            }
+
+            .option-buttons iron-icon {
+                padding: 8px;
+                margin-right: 16px;
+                margin-left: 8px;
+                color: var(--dark-primary-color);
+            }
+
+            
+        </style>
+
+        <input type="file" accept="image/*" on-change="_onImageUploaded" id="fileInput">
+        <paper-dialog modal id=dialog opened={{opened}}>
+            <agave-dialog-toolbar waiting={{waiting}} type=details class=toolbar edit-state={{editState}}
+                on-cancel="cancelDialog"
+                on-edit="editPatient"
+                on-menu="openMenu"
+                on-submit="submitChanges">
+            </agave-dialog-toolbar>
+            
+            <paper-dialog-scrollable>
+                <div class=image-container>
+
+                    <paper-progress class="blue" value="{{uploadProgress}}"></paper-progress>
+                    
+                    <template is="dom-if" if={{!editState}}>
+                        <img class=image src="{{data.image}}"></img>
+                        <paper-input always-float-label label=Nombre class="info-name-input" value={{data.name}} readonly></paper-input>
+                    </template>
+                    
+                    <template is="dom-if" if={{editState}}>
+                        <img class=image src="{{tmpPatient.image}}"></img>
+                        <paper-input always-float-label label=Nombre class="info-name-edit" value={{tmpPatient.name}}></paper-input>
+                        <paper-fab icon="my-icons:camera" on-click="_onCameraFabClick"></paper-fab>
+                    </template>
+                    
+                </div>
+
+                <div class="info-container">
+                    <div class=header>Informacion</div>
+                    <template is="dom-if" if={{!editState}}>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:phone"></paper-icon-button><paper-input always-float-label readonly label="Telefono" class=info-item-input value={{data.phone}} type=tel></paper-input></div>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:location"></paper-icon-button><paper-input always-float-label readonly label="Direccion" class=info-item-input value={{data.address}}></paper-input></div>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:mail"></paper-icon-button><paper-input always-float-label readonly label="Correo electronico" class=info-item-input value={{data.email}} type=email></paper-input></div>    
+                    </template>
+                    
+                    
+                    <template is="dom-if" if={{editState}}>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:phone"></paper-icon-button><paper-input always-float-label label="Telefono" class=info-item-edit value={{tmpPatient.phone}} type=tel></paper-input></div>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:location"></paper-icon-button><paper-input always-float-label label="Direccion" class=info-item-edit value={{tmpPatient.address}}></paper-input></div>
+                        <div class=info-item><paper-icon-button class=info-icon icon="my-icons:mail"></paper-icon-button><paper-input always-float-label label="Correo electronico" class=info-item-edit value={{tmpPatient.email}} type=email></paper-input></div>    
+                    </template>                    
+                </div>
+
+                <div class="tests-container">
+                    <div class="header">Examenes de vision<paper-icon-button on-click="_onTestsArrowClick" icon="{{_computeArrowDirection(testsOpened)}}"></paper-icon-button></div>
+
+                    <iron-collapse id=testsCollapsable opened={{testsOpened}}>
+                        <div class="collapse-content">
+
+                            <template is="dom-if" if={{!examinations.length}}>
+                                <div class=empty-view>
+                                    <div>No hay examenes de vision...</div>
+                                </div>
+                            </template>
+
+                            <template is="dom-repeat" items={{examinations}} 
+                                as=exam>
+                                <div class=single-test on-click="_onSingleExamClick">
+                                    <div class=circle></div>
+                                    <div class=test-info>
+                                        <div class=main-text>{{_computeShortId(exam.__id__)}}</div>
+                                        <div class=subtitle>{{_formatDate(exam.date)}}</div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </iron-collapse>
+                    
+                </div>
+
+                <div class="receipts-container">
+                    <div class="header">Recibos de compra<paper-icon-button on-click="_onReceiptsArrowClick" icon="{{_computeArrowDirection(receiptsOpened)}}"></paper-icon-button></div>
+                    
+                    <iron-collapse id=receiptsCollapsable opened={{receiptsOpened}}>
+                        <div class="collapse-content">
+
+                            
+                            <template is="dom-if" if={{!receipts.length}}>
+                                <div class=empty-view>
+                                    <div>No hay recibos...</div>
+                                </div>
+                            </template>
+                            
+                            
+                            <template is="dom-repeat" items={{receipts}} 
+                                as=receipt>
+                                <div class=single-test  on-click="_onSingleReceiptClick">
+                                    <div class=circle></div>
+                                    <div class=test-info>
+                                        <div class=main-text>{{_computeShortId(receipt.__id__)}}</div>
+                                        <div class=subtitle>{{_formatDate(receipt.date)}}</div>
+                                    </div>
+                                </div>
+                            </template>    
+                        </div>
+                    </iron-collapse>
+                </div>
+
+                <div class="services-container">
+                    <div class="header">Ordenes de servicio<paper-icon-button on-click="_onServicesArrowClick" icon="{{_computeArrowDirection(servicesOpened)}}"></paper-icon-button></div>
+                    
+                    <iron-collapse id=servicesCollapsable opened={{servicesOpened}}>
+                        <div class="collapse-content">
+                            
+                            <template is="dom-if" if={{!serviceOrders.length}}>
+                                <div class=empty-view>
+                                    <div>No hay ordenes de servicio...</div>
+                                </div>
+                            </template>
+
+                            <template is="dom-repeat" items={{serviceOrders}} 
+                                as=order>
+                                <div class=single-test  on-click="_onSingleServiceOrderClick">
+                                    <div class=circle></div>
+                                    <div class=test-info>
+                                        <div class=main-text>{{_computeShortId(order.__id__)}}</div>
+                                        <div class=subtitle>{{_formatDate(order.date)}}</div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </iron-collapse>
+                </div>
+            </paper-dialog-scrollable>
+        </paper-dialog>
+
+        <paper-dialog id=confirmDialog>
+            <h2>Borrar paciente</h2>
+            <div>¿Seguro que deseas borrar al paciente? Esta accion no puede ser revertida.</div>
+            <div class=buttons>
+                <paper-button class=cancel-btn on-tap=closeConfirmDialog>Mejor no</paper-button>
+                <paper-button class=delete-btn on-tap=deletePatient>Borrar paciente</paper-button>
+            </div>
+        </paper-dialog>
+
+        <paper-dialog entry-animation="slide-from-bottom-animation" exit-animation="slide-down-animation" with-backdrop id=bottomMenu>
+            <paper-button class=option-buttons on-click="_onNewVisionTestClick"><iron-icon icon="my-icons:vision"></iron-icon><span>Hacer examen de vista</span></paper-button>
+            <paper-button class=option-buttons on-click="_onReceivePaymentClick"><iron-icon icon="my-icons:payment"></iron-icon><span>Recibir pago</span></paper-button>
+            <paper-button class=option-buttons on-click="_onCreateServiceOrderClick"><iron-icon icon="my-icons:service"></iron-icon><span>Crear orden de servicio</span></paper-button>
+            <paper-button class=option-buttons on-click="_onDeletePatientClick"><iron-icon icon="my-icons:delete"></iron-icon><span>Borrar paciente</span></paper-button>
+        </paper-dialog>
+
+        <!-- <examination-details-sheet id=examDetails></examination-details-sheet>
+        <receipt-details-sheet id=receiptDetails></receipt-details-sheet>
+        <service-details-sheet id=serviceDetails></service-details-sheet>
+        <add-service-dialog id=serviceDialog uid={{id}}></add-service-dialog>
+        <payment-dialog id=paymentDialog></payment-dialog> -->
+
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+    </template>
+
+    <script>
+        /**
+         * `details-patient-dialog` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class DetailsPatientDialog extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'details-patient-dialog';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    id: {
+                        type: String,
+                        notify: true
+                    },
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    waiting: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    editState: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    data: {
+                        type: Object,
+                        doc: 'patients/{id}',
+                        live: true
+                    },
+                    tmpPatient: Object,
+                    receipts: {
+                        type: Array,
+                        collection: 'patients/{id}/receipts',
+                        live: true
+                    },
+                    examinations: {
+                        type: Array,
+                        collection: 'patients/{id}/examinations',
+                        live: true
+                    },
+                    serviceOrders: {
+                        type: Array,
+                        collection: 'patients/{id}/serviceOrders',
+                        live: true
+                    },
+                    uploadProgress: {
+                        type: Number,
+                        value: 0
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '_openedObserver(opened)',
+                    '_editStateObserver(editState)',
+                ];
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.dialog;
+                });
+            }
+
+            _openedObserver(opened) {
+                if (!opened) this.set('uploadProgress', 0);
+            }
+
+            _editStateObserver(editState) {
+                if (editState) {
+                    this._fillTmpValues();
+                } else {
+                    this._clearTmpValues();
+                }
+            }
+
+            _fillTmpValues() {
+                this.tmpPatient = this.data;
+            }
+            
+            _clearTmpValues() {
+                this.tmpPatient = null; 
+                this.uploadProgress = 0;          
+            }
+
+            openMenu(e) {
+                this.$.bottomMenu.open();
+            }
+
+            closeMenu(e) {
+                this.$.bottomMenu.close();
+            }
+
+            editPatient(e) {
+                this.editState = true;
+            }
+
+            _onDeletePatient(e) {
+                this.closeMenu();
+                this.$.confirmDialog.open();
+            }
+            
+            closeConfirmDialog(e) {
+                this.$.confirmDialog.close();
+            }
+
+            cancelDialog() {
+                if (this.editState) {
+                    this.editState = false;
+                    return;
+                }
+                this.opened = false;
+            }
+
+            _onCameraFabClick(e) {
+                this.$.fileInput.click();
+            }
+
+            _onImageUploaded(e) {
+                let file = null;
+                let fileList = e.target.files;
+                for (let i = 0; i < fileList.length; i++) {
+                    if (fileList[i].type.match(/^image\//)) {
+                        file = fileList[i];
+                        break;
+                    }
+                }
+
+                if (file !== null) {
+                    let url = URL.createObjectURL(file);
+                    var storage = firebase.storage();
+                    var storageRef = storage.ref();
+                    var associateImagesRef = storageRef.child(`userProfilePictures/${this.id}/${file.name}`);
+                    this.uploadProgress = associateImagesRef;
+                    
+                    var uploadTask = associateImagesRef.put(file);
+
+                    uploadTask.on('state_changed', snapshot => {
+                        var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log('upload progress: ', progress);
+                        this.uploadProgress = progress;
+
+                        switch (snapshot.state) {
+                            case firebase.storage.TaskState.PAUSED: // or 'paused'
+                                console.log('Upload is paused');
+                                break;
+                            case firebase.storage.TaskState.RUNNING: // or 'running'
+                                console.log('Upload is running');
+                                break;
+                        }
+                    }, err => {
+                        console.log('image unable to be uploaded:', err);
+                    }, () => {
+                        this.tmpPatient.image = uploadTask.snapshot.downloadURL;
+                        this.$.toast.text = 'Su imagen a sido guardada exitosamente.';
+                        this.$.toast.open();
+                    });
+                }
+            }
+
+            submitChanges(e) {
+                this.waiting = true;
+                var updatedPatient = this.tmpPatient;
+                console.log('updating patient:', updatedPatient);
+
+                Object.keys(updatedPatient).forEach(key => {
+                if(updatedPatient[key] === undefined) updatedPatient[key] = null;
+                });
+                delete updatedPatient['__id__'];
+
+                var db = firebase.firestore();
+                db.doc(`patients/${this.id}`).update(updatedPatient).then(response => {
+                    console.log('patient update successful!');
+                    this.waiting = false;
+                    this.$.toast.text = 'Sus cambios han sido guardados.';
+                    this.$.toast.open();
+                    this.editState = false;
+                }).catch(err => {
+                    console.log('patient update ERROR:', err);
+                    this.waiting = false;
+                });
+            }
+
+            _onDeletePatient(e) {
+                console.log('deleting patient...')
+                var db = firebase.firestore();
+                return db.doc(`patients/${this.id}`).delete().then(response => {
+                    console.log('patient delete SUCCESS:', response);
+                    this.closeConfirmDialog();
+                    this.cancelDialog();
+                }).catch(err => {
+                    console.log('patient delete ERROR:', err)
+                });
+            }
+
+            _formatDate(date) {
+                return moment(date).locale('es').format('MMMM D, h:mma');
+            }
+
+            _computeArrowDirection(opened) {
+                var arrowIcon = 'my-icons:';
+                return (opened ? `${arrowIcon}up` : `${arrowIcon}down`);
+            }
+
+
+            _onReceiptsArrowClick(e) {
+                this.$.receiptsCollapsable.toggle();
+            }
+
+            _onServicesArrowClick(e) {
+                this.$.servicesCollapsable.toggle();
+            }
+
+            _onTestsArrowClick(e) {
+                this.$.testsCollapsable.toggle();
+            }
+
+            _computeShortId(id) {
+                return id.slice(-6);
+            }
+
+        }
+
+        window.customElements.define(DetailsPatientDialog.is, DetailsPatientDialog);
+    </script>
+</dom-module>

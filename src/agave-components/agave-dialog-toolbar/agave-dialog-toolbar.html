@@ -1,0 +1,144 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="agave-dialog-toolbar">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            app-toolbar {
+                padding: 0 16px;
+                margin-top: 0;
+                background-color: var(--app-primary-color);
+                color: whitesmoke;
+
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            paper-button {
+                font-size: 14px;
+            }
+
+            .title {
+                font-size: 18px;
+                text-align: center;
+                margin: 0;
+                text-align: start;
+                flex: 1;
+            }
+        </style>
+
+        <app-toolbar>
+            <paper-icon-button icon="my-icons:arrow-back" on-click="_onCancelClick"></paper-icon-button>
+            <template is="dom-if" if={{editState}}>
+                <div class=title>Editando...</div>
+                <paper-button on-click="_onSubmitClick">{{_computeSubmitButtonText(waiting)}}</paper-button>
+            </template>
+            
+            <template is="dom-if" if={{_computeShouldShowOptions(editState,type)}}>
+                <div class=title>Detalles</div>
+                <div>
+                    <paper-icon-button icon="my-icons:edit" on-click="_onEditClick"></paper-icon-button>
+                    <paper-icon-button icon="my-icons:bottom-sheet" on-click="_onMenuClick"></paper-icon-button>
+                </div>
+            </template>
+
+            
+            <template is="dom-if" if={{_displayCreateOptions(type)}}>
+                <div class=title>Creando</div>
+                <paper-button on-click="_onSubmitClick">Guardar</paper-button>
+            </template>
+            
+
+        </app-toolbar>
+
+    </template>
+
+    <script>
+        /**
+         * `agave-dialog-toolbar` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AgaveDialogToolbar extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'agave-dialog-toolbar';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    editState: Boolean,
+                    waiting: Boolean,
+                    type: String
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _onCancelClick() {
+                this.dispatchEvent(new CustomEvent('cancel'));
+            }
+
+            _onEditClick(e) {
+                this.dispatchEvent(new CustomEvent('edit'))
+            }
+
+            _onSubmitClick(e) {
+                if (this.waiting) return;
+                this.dispatchEvent(new CustomEvent('submit'));
+            }
+
+            _onMenuClick(e) {
+                this.dispatchEvent(new CustomEvent('menu'))
+            }
+
+            _computeSubmitButtonText(waiting) {
+                return (waiting) ? 'Guardando...' : 'Guardar';
+            }
+
+            _displayCreateOptions(type) {
+                return (type === 'create');
+            }
+
+            _computeShouldShowOptions(editState, type) {
+                return (!editState && type === 'details');
+            }
+
+        }
+
+        window.customElements.define(AgaveDialogToolbar.is, AgaveDialogToolbar);
+    </script>
+</dom-module>

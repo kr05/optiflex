@@ -1,0 +1,187 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../bower_components/paper-spinner/paper-spinner-lite.html">
+
+<dom-module id="sign-in-dialog">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            paper-dialog {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .title {
+                font-size: 20px;
+                text-align: center;
+                padding: 24px;
+                margin: 0;
+
+                text-align: start;
+            }
+
+            .main-toolbar {
+                margin-top: 0;
+                padding: 0 16px;
+                background-color: var(--app-primary-color);
+                color: whitesmoke;
+
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+
+            }
+
+            paper-input {
+                padding: 0 24px;
+            }
+
+            paper-button {
+                color: green;
+            }
+
+            paper-spinner-lite {
+                margin-right: 32px;
+            }
+        </style>
+
+        <paper-dialog id=dialog modal opened=[[opened]]>
+            <app-toolbar class=main-toolbar>
+                <div class=title>Optica</div>
+            </app-toolbar>
+            <paper-input always-float-label label="Correo electronico" value={{e}}></paper-input>
+            <paper-input always-float-label type=password label="Contraseña" value={{p}}></paper-input>
+
+            <div class=buttons>
+                <template is="dom-if" if={{!waiting}}>
+                    <paper-button class=sign-in-button on-click="onSignInClick">Ingresar</paper-button>
+                </template>
+                
+                <template is="dom-if" if={{waiting}}>
+                    <paper-spinner-lite active={{waiting}}></paper-spinner-lite>
+                </template>                
+            </div>
+            
+        </paper-dialog>
+
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+    </template>
+
+    <script>
+        /**
+         * `sign-in-dialog` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SignInDialog extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'sign-in-dialog';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    opened: Boolean,
+                    e: String,
+                    p: String,
+                    waiting: {
+                        type: Boolean,
+                        value: false
+                    } 
+                };
+            }
+
+            static get observers() {
+                return [
+                    '_openedObserver(opened)',
+                ];
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+             ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.dialog;
+                });
+            }
+
+            _openedObserver(opened) {
+                if (!opened) this.resetElement();  
+            }
+
+            resetElement() {
+                this.waiting = false;
+                this.p = null;
+                this.e = null;
+            }
+
+            validInputs() {
+                return (this.e && this.p)
+            }
+
+            onSignInClick(e) {
+                this.waiting = true;
+                
+                if (!this.validInputs()) {
+                    console.log('null inputs, exiting...');
+                    this.waiting = false;
+                    return;
+                }
+
+                let signInEvent = new CustomEvent('sign-in', {detail: {e: this.e, p: this.p}});
+                this.dispatchEvent(signInEvent);
+
+            }
+
+            handleError(err) {
+                switch (err.code) {
+                    case 'auth/invalid-email':
+                        this.$.toast.text = 'El correo electronico no es valido.';
+                        this.$.toast.open();
+                        break;
+                    case 'auth/user-not-found':
+                        this.$.toast.text = 'La cuenta no se a encontrado.';
+                        this.$.toast.open();
+                        break;
+                    case 'auth/user-disabled':
+                        this.$.toast.text = 'La cuenta a sido desactivada.';
+                        this.$.toast.open();
+                        break;
+                    case 'auth/wrong-password':
+                        this.$.toast.text = 'La contraseña es incorrecta.';
+                        this.$.toast.open();
+                        break;
+                    
+                    default:
+                        this.$.toast.text = err.message;
+                        this.$.toast.open();
+                        break;
+                }
+
+                this.waiting = false;
+            }
+
+        }
+
+        window.customElements.define(SignInDialog.is, SignInDialog);
+    </script>
+</dom-module>

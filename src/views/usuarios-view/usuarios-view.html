@@ -1,0 +1,90 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="single-user.html">
+
+<dom-module id="usuarios-view">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            .empty-state {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 20px;
+            }
+        </style>
+
+        
+        <template is="dom-repeat" items={{users}} 
+            as=user>  
+            <single-user on-click="_onUserClick" user={{user}}></single-user>
+        </template>
+        
+        <template is=dom-if if={{!users.length}}>
+            <div class=empty-state>No hay usuarios</div>
+        </template>
+
+    </template>
+
+    <script>
+        /**
+         * `usuarios-view` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class UsuariosView extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'usuarios-view';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    users: {
+                        type: Array,
+                        collection: 'users',
+                        live: true
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _onUserClick(e) {
+                this.dispatchEvent(new CustomEvent('open-dialog', {detail: {id: e.model.user['__id__'], type: 'details', subType: 'user'}}));
+            }
+
+        }
+
+        window.customElements.define(UsuariosView.is, UsuariosView);
+    </script>
+</dom-module>

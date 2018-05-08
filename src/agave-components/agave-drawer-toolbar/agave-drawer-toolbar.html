@@ -1,0 +1,113 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="agave-drawer-toolbar">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            app-toolbar {
+                color: whitesmoke;
+                background-image: url("drawerBackground.png");
+                height: 165px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            img {
+                height: 96px;
+                width: 96px;
+                background-color: gray;
+                border-radius: 50%;
+                background: #ddd;
+                margin-right: 16px;
+                object-fit: cover;
+                border: 1px solid;
+            }
+
+            .profile-container {
+                display: flex;
+                margin: 16px;
+                align-items: center;
+                width: 100%;
+            }
+
+            .profile-info {
+                display: flex;
+                flex-direction: column;
+                font-size: 14px;
+                justify-content: space-around;
+            }
+
+            paper-button {
+                color: whitesmoke;
+                background-color: var(--accent-color);
+                font-size: 12px;
+                margin: 16px 0 0;
+            }
+
+            .account-type {
+                font-weight: bold;
+            }
+
+            .version {
+                font-size: small;
+                text-align: center;
+            }
+        </style>
+
+        <app-toolbar>
+            <div class=profile-container>            
+                <img src="{{user.photoURL}}"></img>
+                <div class=profile-info>
+                    <div>{{user.displayName}}</div>
+                    <div>{{user.email}}</div>
+                    <div class=account-type>{{accountType}}</div>
+                    <paper-button on-click="_onSignOutButtonClick">Cerrar sesion</paper-button>
+                </div>
+            </div>  
+            <div class=version>v1.0.0</div>
+        </app-toolbar>
+
+    </template>
+
+    <script>
+        /**
+         * `agave-drawer-toolbar` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AgaveDrawerToolbar extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'agave-drawer-toolbar';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    accountType: String,
+                    user: Object
+                };
+            }
+
+            _onSignOutButtonClick(e) {
+                this.dispatchEvent(new CustomEvent('sign-out'))
+            }
+
+        }
+
+        window.customElements.define(AgaveDrawerToolbar.is, AgaveDrawerToolbar);
+    </script>
+</dom-module>

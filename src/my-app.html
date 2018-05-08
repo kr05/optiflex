@@ -22,17 +22,43 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="my-icons.html">
 
-<link rel="lazy-import" href="my-view1.html">
-<link rel="lazy-import" href="my-view2.html">
-<link rel="lazy-import" href="my-view3.html">
-<link rel="lazy-import" href="my-view404.html">
+<!-- firebase imports -->
+<link rel="import" href="../bower_components/polymerfire/firebase-app.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-auth.html">
+
+<!-- agave imports -->
+<link rel="import" href="agave-components/agave-drawer-toolbar/agave-drawer-toolbar.html">
+<link rel="import" href="agave-components/agave-fab/agave-fab.html">
+
+<!-- lazy import views -->
+<link rel="lazy-import" href="views/usuarios-view/usuarios-view.html">
+<link rel="lazy-import" href="views/pacientes-view/pacientes-view.html">
+<link rel="lazy-import" href="views/error-view/error-view.html">
+
+<link rel="import" href="dialogs/sign-in-dialog/sign-in-dialog.html">
+
+<!-- lazy import dialogs -->
+<link rel="lazy-import" href="dialogs/details-user-dialog/details-user-dialog.html">
+<link rel="lazy-import" href="dialogs/details-patient-dialog/details-patient-dialog.html">
+<link rel="lazy-import" href="dialogs/create-user-dialog/create-user-dialog.html">
+
+<!-- moment import -->
+<script src="../bower_components/moment/min/moment-with-locales.min.js"></script>
+
+
 
 <dom-module id="my-app">
   <template>
     <style>
       :host {
-        --app-primary-color: #4285f4;
+        --app-primary-color: #448AFF;
+        --light-primary-color: #83b9ff;
+        --dark-primary-color: #005ecb;
         --app-secondary-color: black;
+        --accent-color: #FF4081;
+        --accent-color-light: #ff79b0;
+        --light-border: rgba(0, 0, 0, 0.12);
+        --image-background-color: #555;
 
         display: block;
       }
@@ -50,6 +76,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         --paper-icon-button-ink-color: white;
       }
 
+      app-drawer {
+        --app-drawer-width: 304px;
+      }
+
+      div[main-title] {
+        text-transform: capitalize;
+      }
+
       .drawer-list {
         margin: 0 20px;
       }
@@ -59,14 +93,38 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding: 0 16px;
         text-decoration: none;
         color: var(--app-secondary-color);
+        line-height: 48px;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .drawer-list a.iron-selected iron-icon {
+        color: var(--accent-color);
+      }
+
+      .drawer-item {
+        display: flex;
+        align-items: center;
+        padding: 9px;
+        text-decoration: none;
+        color: var(--app-secondary-color);
         line-height: 40px;
       }
 
-      .drawer-list a.iron-selected {
-        color: black;
-        font-weight: bold;
+      .drawer-icon {
+        margin-right: 32px;
       }
     </style>
+    
+    <firebase-app
+        api-key="AIzaSyAh1kohjyxnqdbU51BQMgo3EKzebjbmyAE"
+        auth-domain="optica-bc213.firebaseapp.com"
+        database-url="https://optica-bc213.firebaseio.com"
+        storage-bucket="optica-bc213.appspot.com"
+        messaging-sender-id="898921077465"
+        project-id="optica-bc213">
+
+    <firebase-auth id="auth" signed-in={{signedIn}} user="{{user}}" on-error="handleFirebaseAuthError">
 
     <app-location
         route="{{route}}"
@@ -80,14 +138,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         tail="{{subroute}}">
     </app-route>
 
-    <app-drawer-layout fullbleed narrow="{{narrow}}">
+    <app-drawer-layout fullbleed force-narrow>
       <!-- Drawer content -->
-      <app-drawer id="drawer" slot="drawer" swipe-open="[[narrow]]">
-        <app-toolbar>Menu</app-toolbar>
+      <app-drawer id="drawer" slot="drawer" swipe-open opened={{drawerOpen}}>
+        <agave-drawer-toolbar account-type={{accountType}} user={{user}} on-sign-out="signOut"></agave-drawer-toolbar>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="view1" href="[[rootPath]]view1">View One</a>
-          <a name="view2" href="[[rootPath]]view2">View Two</a>
-          <a name="view3" href="[[rootPath]]view3">View Three</a>
+          <a name="usuarios" class=drawer-item href="[[rootPath]]usuarios"><iron-icon class=drawer-icon icon="my-icons:users"></iron-icon>Usuarios</a>
+          <a name="pacientes" class=drawer-item href="[[rootPath]]pacientes"><iron-icon class=drawer-icon icon="my-icons:patients"></iron-icon>Pacientes</a>
+          <a name="examenes" class=drawer-item href="[[rootPath]]examenes"><iron-icon class=drawer-icon icon="my-icons:vision"></iron-icon>Examenes pendientes</a>
+          <a name="ventas" class=drawer-item href="[[rootPath]]ventas"><iron-icon class=drawer-icon icon="my-icons:cart"></iron-icon>Ventas</a>
+          <a name="laboratorio" class=drawer-item href="[[rootPath]]laboratorio"><iron-icon class=drawer-icon icon="my-icons:lab"></iron-icon>Laboratorio</a>
+          <a name="micas" class=drawer-item href="[[rootPath]]micas"><iron-icon class=drawer-icon icon="my-icons:lens"></iron-icon>Micas por elaborar</a>
         </iron-selector>
       </app-drawer>
 
@@ -97,22 +158,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <app-header slot="header" condenses reveals effects="waterfall">
           <app-toolbar>
             <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
-            <div main-title>My App</div>
+            <div main-title>{{page}}</div>
           </app-toolbar>
         </app-header>
 
         <iron-pages
             selected="[[page]]"
             attr-for-selected="name"
-            fallback-selection="view404"
+            fallback-selection="error"
             role="main">
-          <my-view1 name="view1"></my-view1>
-          <my-view2 name="view2"></my-view2>
-          <my-view3 name="view3"></my-view3>
-          <my-view404 name="view404"></my-view404>
+              <usuarios-view on-open-dialog="_openDialogClick" name=usuarios></usuarios-view>
+              <pacientes-view name=pacientes on-open-dialog="_openDialogClick"></pacientes-view>
+              <error-view name=error></error-view>
         </iron-pages>
       </app-header-layout>
     </app-drawer-layout>
+
+    <agave-fab drawer-open={{drawerOpen}} page={{page}} on-open-dialog="_openDialogClick"></agave-fab>
+
+    <!-- dialogs -->
+    <sign-in-dialog id=signInDialog on-sign-in="_onSignInEvent" opened={{!signedIn}}></sign-in-dialog>
+    <details-user-dialog id="userDetailsDialog"></details-user-dialog>
+    <details-patient-dialog id="patientDetailsDialog"></details-patient-dialog>
+    <create-user-dialog id="userCreateDialog"></create-user-dialog>
+
+    <!-- end dialogs -->
   </template>
 
   <script>
@@ -135,6 +205,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           // This shouldn't be neccessary, but the Analyzer isn't picking up
           // Polymer.Element#rootPath
           rootPath: String,
+          accountType: String,
+          user: Object
         };
       }
 
@@ -144,10 +216,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ];
       }
 
+      // ready() {
+      //   super.ready();
+
+      //   const firestore = firebase.firestore();
+      //   const settings = {/* your settings... */ timestampsInSnapshots: true};
+      //   firestore.settings(settings);  
+      // }
+
       _routePageChanged(page) {
         // If no page was found in the route data, page will be an empty string.
         // Default to 'view1' in that case.
-        this.page = page || 'view1';
+        this.page = page || 'usuarios';
 
         // Close a non-persistent drawer when the page & route are changed.
         if (!this.$.drawer.persistent) {
@@ -157,7 +237,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _pageChanged(page) {
         // Load page import on demand. Show 404 page if fails
-        const resolvedPageUrl = this.resolveUrl('my-' + page + '.html');
+        const resolvedPageUrl = this.resolveUrl(`views/${page}-view/${page}-view.html`);
         Polymer.importHref(
             resolvedPageUrl,
             null,
@@ -166,8 +246,49 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _showPage404() {
-        this.page = 'view404';
+        this.page = 'error';
       }
+
+      handleFirebaseAuthError(e) {
+        console.log('firebase auth error:', e)
+      }
+
+      _onSignInEvent(e) {
+        console.log('on sign in event:', e.detail);
+        let i = e.detail;
+        this.$.auth.signInWithEmailAndPassword(i.e, i.p).then(response => {
+          console.log('sign in successful:', response);
+        }).catch(err => {
+          console.log('sign in error:', err);
+          this.$.signInDialog.handleError(err);
+        });
+      }
+
+      signOut() {
+        console.log('signing out...')
+        this.$.drawer.close();
+        this.$.auth.signOut();
+      }
+
+      _openDialogClick(e) {
+        console.log('open dialog click:', e.detail)
+        // Load dialog import on demand.
+        var resolvedDialogUrl = this.resolveUrl(`dialogs/${e.detail.type}-${e.detail.subType}-dialog/${e.detail.type}-${e.detail.subType}-dialog.html`);
+            Polymer.importHref(
+              resolvedDialogUrl,
+              this._openDialog(e.detail.id, e.detail.type, e.detail.subType),
+              null,
+              true);
+      }
+
+      _openDialog(id, type, subType) {
+        let capitalizedType = type.replace(/\b\w/g, l => l.toUpperCase());
+        if (id) {
+          this.$[`${subType}${capitalizedType}Dialog`].id = id;
+        }
+        this.$[`${subType}${capitalizedType}Dialog`].opened = true;  
+      }
+
     }
 
     window.customElements.define(MyApp.is, MyApp);
