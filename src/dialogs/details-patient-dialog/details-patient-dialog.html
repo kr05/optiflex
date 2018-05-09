@@ -13,6 +13,12 @@
 <link rel="import" href="../../../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../shared-dialog-styles\shared-dialog-styles.html">
 
+<link rel="import" href="payment-dialog.html">
+<link rel="import" href="add-service-dialog.html">
+<link rel="import" href="../../agave-components/examination-details-sheet/examination-details-sheet.html">
+<link rel="import" href="../../agave-components/receipt-details-sheet/receipt-details-sheet.html">
+<link rel="import" href="../../agave-components/service-details-sheet/service-details-sheet.html">
+
 <dom-module id="details-patient-dialog">
     <template>
         <style include="shared-dialog-styles">
@@ -308,11 +314,11 @@
             <paper-button class=option-buttons on-click="_onDeletePatientClick"><iron-icon icon="my-icons:delete"></iron-icon><span>Borrar paciente</span></paper-button>
         </paper-dialog>
 
-        <!-- <examination-details-sheet id=examDetails></examination-details-sheet>
+        <examination-details-sheet id=examDetails></examination-details-sheet>
         <receipt-details-sheet id=receiptDetails></receipt-details-sheet>
         <service-details-sheet id=serviceDetails></service-details-sheet>
         <add-service-dialog id=serviceDialog uid={{id}}></add-service-dialog>
-        <payment-dialog id=paymentDialog></payment-dialog> -->
+        <payment-dialog id=paymentDialog></payment-dialog>
 
         <paper-toast class=fit-bottom id="toast"></paper-toast>
 
@@ -447,15 +453,6 @@
                 this.editState = true;
             }
 
-            _onDeletePatient(e) {
-                this.closeMenu();
-                this.$.confirmDialog.open();
-            }
-            
-            closeConfirmDialog(e) {
-                this.$.confirmDialog.close();
-            }
-
             cancelDialog() {
                 if (this.editState) {
                     this.editState = false;
@@ -533,18 +530,6 @@
                 });
             }
 
-            _onDeletePatient(e) {
-                console.log('deleting patient...')
-                var db = firebase.firestore();
-                return db.doc(`patients/${this.id}`).delete().then(response => {
-                    console.log('patient delete SUCCESS:', response);
-                    this.closeConfirmDialog();
-                    this.cancelDialog();
-                }).catch(err => {
-                    console.log('patient delete ERROR:', err)
-                });
-            }
-
             _formatDate(date) {
                 return moment(date).locale('es').format('MMMM D, h:mma');
             }
@@ -569,6 +554,87 @@
 
             _computeShortId(id) {
                 return id.slice(-6);
+            }
+
+            _onSingleExamClick(e) {
+                console.log('on single exam click:', e.model.exam)
+                this.$.examDetails.examResults = e.model.exam;
+                this.$.examDetails.opened = true;
+            }
+
+            _onSingleReceiptClick(e) {
+                console.log('on single receipt click:', e.model.receipt)
+                this.$.receiptDetails.order = e.model.receipt;
+                this.$.receiptDetails.opened = true;
+            }
+
+            _onSingleServiceOrderClick(e) {
+                console.log('on single service order click:', e.model.order)
+                this.$.serviceDetails.service = e.model.order;
+                this.$.serviceDetails.opened = true;
+            }
+
+            _onNewVisionTestClick(e) {
+                this.$.bottomMenu.close();
+
+                var states = {}
+                states['create-exam'] = moment().toDate();
+
+                const newExam = {
+                    name: this.data.name,
+                    image: this.data.image,
+                    states: states
+                }
+
+                var db = firebase.firestore();
+                db.doc(`pendingExams/${this.id}`).get().then(doc => {
+                    console.log('get pending exam successful!');
+                    if (!doc.exists) {
+                        return db.doc(`pendingExams/${this.id}`).set(newExam);
+                    } else {
+                        this.$.toast.text = 'El paciente ya esta en la lista de espera.';
+                        this.$.toast.open();
+                        return Promise.reject('Pending exam already exists for patient.')
+                    }
+                }).then(response => {
+                    console.log('patient added successfully to waiting list...')
+                    this.$.toast.text = 'El paciente se a agregado a la lista de espera.';
+                    this.$.toast.open();
+                }).catch(err => {
+                    console.log('create vision exam ERROR:', err);
+                });
+            }
+
+            _onReceivePaymentClick(e) {
+                this.$.bottomMenu.close();
+                this.$.paymentDialog.uid = this.id;
+                this.$.paymentDialog.opened = true;
+            }
+
+            _onCreateServiceOrderClick(e) {
+                this.$.bottomMenu.close();
+                this.$.serviceDialog.opened = true;
+            }
+
+            _onDeletePatientClick(e) {
+                this.$.bottomMenu.close();
+                this.$.confirmDialog.open();
+            }
+
+            closeConfirmDialog(e) {
+                this.$.confirmDialog.close();
+            }
+
+            deletePatient(e) {
+                console.log('deleting patient...')
+                var db = firebase.firestore();
+                return db.doc(`patients/${this.id}`).delete().then(response => {
+                    console.log('patient delete SUCCESS:', response);
+                    this.closeConfirmDialog();
+                    this.cancelDialog();
+                }).catch(err => {
+                    console.log('patient delete ERROR:', err)
+                });
             }
 
         }

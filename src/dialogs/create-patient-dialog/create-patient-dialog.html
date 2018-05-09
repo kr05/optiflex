@@ -1,0 +1,384 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../agave-components/agave-dialog-toolbar/agave-dialog-toolbar.html">
+<link rel="import" href="../../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../../../bower_components/paper-progress/paper-progress.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../shared-dialog-styles\shared-dialog-styles.html">
+
+<dom-module id="create-patient-dialog">
+    <template>
+        <style include="shared-dialog-styles">
+            :host {
+                display: block
+            }
+
+            #fileInput {
+                display: none;
+            }
+
+            paper-fab {
+                position: relative;
+                left: calc(100% - 72px);
+                top: -110px;
+            }
+
+            paper-progress {
+                width: 100%;
+            }
+
+            .secondary {
+                margin-top: 16px;
+            }
+
+            .info-checkbox {
+                flex: 1;
+                --paper-checkbox-margin: 8px;
+            }
+
+            .checkbox-container, .surgery-inputs-container {
+                display: flex;
+                align-items: center;
+            }
+
+            .surgery-inputs-container {
+                --paper-input-container: {
+                    margin: 8px;
+                };
+            }
+
+            paper-textarea {
+                --paper-input-container-underline: {
+                    display: none;
+                }
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+
+                --paper-input-container: {
+                    border: 1px solid rgba(0, 0, 0, 0.30);
+                    border-radius: 5px;
+                    padding: 8px;
+                    margin: 8px 24px;
+                    height: 80px;
+                }
+            }
+
+        </style>
+
+        <input type="file" accept="image/*" on-change="_onImageUploaded" id="fileInput">
+
+        <paper-dialog modal id=dialog opened={{opened}}>
+
+            <agave-dialog-toolbar waiting={{waiting}} type=create class=toolbar
+            on-cancel="cancelDialog"
+            on-submit="createPatient"></agave-dialog-toolbar>
+            
+            <paper-dialog-scrollable>
+                <div class=image-container>
+                    <paper-progress class="blue" value="{{uploadProgress}}"></paper-progress>
+                    <img class=image src="{{image}}"></img>
+                    <paper-input always-float-label label=Nombre class="info-name-edit" value={{name}}></paper-input>
+                    <paper-fab icon="my-icons:camera" on-click="_onCameraFabClick"></paper-fab>
+                </div>
+
+                <div>
+                    <div class=header>Informacion</div>
+                    <div class=info-item><paper-icon-button class=info-icon icon="my-icons:phone"></paper-icon-button><paper-input always-float-label label="Telefono" class=info-item-edit value={{phone}} type=tel></paper-input></div>
+                    <div class=info-item><paper-icon-button class=info-icon icon="my-icons:location"></paper-icon-button><paper-input always-float-label label="Direccion" class=info-item-edit value={{address}}></paper-input></div>
+                    <div class=info-item><paper-icon-button class=info-icon icon="my-icons:mail"></paper-icon-button><paper-input always-float-label label="Correo electronico" class=info-item-edit value={{email}} type=email></paper-input></div>        
+                </div>
+
+                <div>
+                    <div class="header secondary">Historial medico</div>
+                    <div class=checkbox-container>
+                        <paper-checkbox class=info-checkbox checked={{isHipertenso}}>Hipertenso?</paper-checkbox>
+                        <paper-checkbox class=info-checkbox checked={{isDiabetico}}>Diabetico?</paper-checkbox>
+                    </div>
+                    
+                    <paper-checkbox class=info-checkbox checked={{showEyesightHistory}}>Historia ocular y familiar</paper-checkbox>
+                    <template is="dom-if" if={{showEyesightHistory}}>
+                        <paper-textarea no-label-float rows=5 label="Descripcion" value={{eyesightHistoryDescription}}></paper-textarea>
+                    </template>
+                    
+                    <paper-checkbox class=info-checkbox checked={{showEyesightSurgery}}>Ha tenido cirugias en los ojos?</paper-checkbox>
+                    <template is="dom-if" if={{showEyesightSurgery}}>
+                        <div class=surgery-inputs-container>
+                            <paper-input always-float-label label="Cuantas?" value={{yearsSinceSurgery}}></paper-input>
+                            <paper-input always-float-label label="Cual ojo?" value={{surgeryLocation}}></paper-input>
+                            <paper-input always-float-label label="Motivo?" value={{surgeryReason}}></paper-input>
+                        </div>
+                    </template>
+                    <paper-checkbox class=info-checkbox checked={{hasWornGlasses}}>Ha usado lentes oftalmicos?</paper-checkbox>
+                    <div class=surgery-inputs-container>
+                        <paper-input always-float-label label="Tiempo sin uso?" value={{timeSinceNoUse}}></paper-input>
+                        <paper-input always-float-label label="Motivo?" value={{noUseMotive}}></paper-input>
+                    </div>  
+                </div>
+            </paper-dialog-scrollable>
+        </paper-dialog>
+
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+        
+
+    </template>
+
+    <script>
+        /**
+         * `create-patient-dialog` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class CreatePatientDialog extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'create-patient-dialog';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    waiting: {
+                        type: Boolean,
+                        value: false
+                    },
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    name: String,
+                    phone: String,
+                    email: String,
+                    address: String,
+                    image: String,
+                    defaultImage: {
+                        type: String,
+                        value: 'https://firebasestorage.googleapis.com/v0/b/optica-bc213.appspot.com/o/default-profile-picture.jpg?alt=media&token=b3d6b86b-8eee-47f7-9208-43586fd1eb4c'
+                    },
+                    uploadProgress: {
+                        type: Number,
+                        value: 0
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.dialog;
+                });
+            }
+
+            cancelDialog() {
+                this.resetData();
+                this.opened = false;
+            }
+
+            resetData(patient) {
+                this.set('name', null)
+                this.set('address', null)
+                this.set('phone', null)
+                this.set('email', null)
+                this.set('image', null)
+
+                this.set('eyesightHistoryDescription', null)
+
+                this.set('yearsSinceSurgery', null)
+                this.set('surgeryLocation', null)
+                this.set('surgeryReason', null)
+
+                this.set('timeSinceNoUse', null)
+                this.set('noUseMotive', null)
+
+                this.set('isHipertenso', false)
+                this.set('isDiabetico', false)
+
+                this.set('showEyesightHistory', false)
+                this.set('showEyesightSurgery', false)
+                this.set('hasWornGlasses', false)
+                this.set('uploadProgress', 0);
+            }
+
+            nullInputs() {
+                var isNull = false;
+                switch (true) {
+                    case (!this.name):
+                        this.$.toast.text = 'Por favor ingrese el nombre del paciente.';
+                        this.$.toast.open();
+                        isNull = true;
+                        break;
+                    case (!this.phone):
+                        this.$.toast.text = 'Por favor ingrese un telefono.';
+                        this.$.toast.open();
+                        isNull = true;
+                        break;
+                    case (!this.address):
+                        this.$.toast.text = 'Por favor ingrese la direccion del paciente.';
+                        this.$.toast.open();
+                        isNull = true;
+                        break;
+                    case (!this.email):
+                        this.$.toast.text = 'Por favor ingrese un correo electronico.';
+                        this.$.toast.open();
+                        isNull = true;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (this.showEyesightHistory && !this.eyesightHistoryDescription) {
+                    this.$.toast.text = 'Por favor ingrese la historia ocular.';
+                    this.$.toast.open();
+                    isNull = true;
+                }
+
+                if (this.showEyesightSurgery && (!this.yearsSinceSurgery || !this.surgeryLocation || !this.surgeryReason)) {
+                    this.$.toast.text = 'Por favor complete la seccion de ciruguia ocular.';
+                    this.$.toast.open();
+                    isNull = true;
+                }
+
+                return isNull;
+            }
+
+            createPatient(e) {
+                this.waiting = true;
+
+                if (this.nullInputs()) {
+                    return;
+                }
+                
+                var newPatient = {
+                    name: this.name,
+                    phone: this.phone,
+                    email: this.email,
+                    address: this.address
+                }
+
+                let medicalHistory = {
+                    hipertenso: this.isHipertenso,
+                    diabetico: this.isDiabetico
+                };
+                
+
+                if (this.showEyesightHistory) {
+                    medicalHistory['eyesightHistory'] = this.eyesightHistoryDescription
+                }
+
+                if (this.showEyesightSurgery) {
+                    medicalHistory['surgeryDetails'] = {
+                        yearsPassed: this.yearsSinceSurgery,
+                        location: this.surgeryLocation,
+                        reason: this.surgeryReason
+                    }
+                }
+
+                let glassesHistory = {
+                    hasWorn: this.hasWornGlasses
+                }
+                if (this.timeSinceNoUse) {
+                    glassesHistory['timePassed'] = this.timeSinceNoUse;
+                }
+                if (this.noUseMotive) {
+                    glassesHistory['reason'] = this.noUseMotive;
+                }
+
+                medicalHistory['glassesHistory'] = glassesHistory;
+                newPatient['medicalHistory'] = medicalHistory;
+
+                if (this.image) {
+                    newPatient['image'] = this.image;
+                } else {
+                    newPatient['image'] = this.defaultImage;
+                }
+
+                console.log('creating patient:', newPatient)
+                var db = firebase.firestore();
+                db.collection('patients').add(newPatient).then(response => {
+                    this.waiting = false;
+                    console.log('create patient successful!');
+                    this.$.toast.text = 'El paciente a sido creado exitosamente.';
+                    this.$.toast.open();
+                    this.cancelDialog();
+                }).catch(err => {
+                    this.waiting = false;
+                    console.log('create patient ERROR:', err);
+                });
+
+
+            }
+
+            _onCameraFabClick(e) {
+                this.$.fileInput.click();
+            }
+
+            _onImageUploaded(e) {
+                let file = null;
+                let fileList = e.target.files;
+                for (let i = 0; i < fileList.length; i++) {
+                    if (fileList[i].type.match(/^image\//)) {
+                        file = fileList[i];
+                        break;
+                    }
+                }
+
+                if (file !== null) {
+                    let url = URL.createObjectURL(file);
+                    var storage = firebase.storage();
+                    var storageRef = storage.ref();
+                    var associateImagesRef = storageRef.child(`patientProfilePictures/${this.id}/${file.name}`);
+                    
+                    var uploadTask = associateImagesRef.put(file);
+                    uploadTask.on('state_changed', snapshot => {
+                        var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log('upload progress: ', progress);
+                        this.uploadProgress = progress;
+
+                        switch (snapshot.state) {
+                            case firebase.storage.TaskState.PAUSED: // or 'paused'
+                                console.log('Upload is paused');
+                                break;
+                            case firebase.storage.TaskState.RUNNING: // or 'running'
+                                console.log('Upload is running');
+                                break;
+                        }
+                    }, err => {
+                        console.log('image unable to be uploaded:', err);
+                    }, () => {
+                        this.image = uploadTask.snapshot.downloadURL;
+                        this.$.toast.text = 'Su imagen a sido guardada exitosamente.';
+                        this.$.toast.open();
+                    });
+                }
+            }
+
+        }
+
+        window.customElements.define(CreatePatientDialog.is, CreatePatientDialog);
+    </script>
+</dom-module>

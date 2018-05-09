@@ -1,0 +1,141 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="payment-details">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            .sub-header, .header {
+                display: flex;
+                justify-content: space-between;
+                margin: 4px 32px;
+            }
+
+            .amount-due {
+                font-weight: bold;
+            }
+
+
+            .empty-state {
+                text-align: center;
+            }
+
+            .title {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.54);
+                padding: 32px 16px 0;
+                font-weight: bold;
+            }
+
+            .divider {
+                border-bottom: 1px solid rgba(0, 0, 0, 0.32);
+            }
+        </style>
+
+        
+        <template is="dom-if" if={{!payments.length}}>
+            <div class="empty-state">No hay pagos que mostrar</div>
+        </template>
+                
+
+        
+        <div class="title">Resumen</div>
+        
+        <div class=header>Total<div class=amount-due>${{total}}</div></div>
+        <template is="dom-repeat" items={{payments}} 
+            as=payment>
+            <div class="sub-header">{{_formatDate(payment.timestamp)}}<div class=date>${{payment.payment}}</div></div>
+        </template>
+        <div class=header>Cantidad restante<div class=amount-due>{{_computeAmountDue(total,payments)}}</div></div>
+        
+
+    </template>
+
+    <script>
+        /**
+         * `payment-details` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class PaymentDetails extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'payment-details';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    payments: Array,
+                    total: Number
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _formatDate(date) {
+                let curDate = moment(date);
+                let formattedDate = curDate.locale('es').format('dddd, MMMM D');
+                return formattedDate;
+            }
+
+            _computePaymentTotal(payments) {
+                if (!payments) {
+                    return;
+                }
+                let paymentTotal = 0;
+                payments.forEach(payment => {
+                    paymentTotal += parseInt(payment.payment);
+                });
+                return paymentTotal;
+            }
+
+            _computeAmountDue(total, payments) {
+                if (!payments) {
+                    return;
+                }
+                console.log(total, payments)
+                let paymentTotal = 0;
+                payments.forEach(payment => {
+                    paymentTotal += parseInt(payment.payment);
+                });
+                console.log('payment total:', paymentTotal)
+                let remaining = (parseInt(total) - paymentTotal);
+
+                if (remaining === 0) return 'pagado';
+
+                return `$${remaining}`;
+            }
+
+        }
+
+        window.customElements.define(PaymentDetails.is, PaymentDetails);
+    </script>
+</dom-module>

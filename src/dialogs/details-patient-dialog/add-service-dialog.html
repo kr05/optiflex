@@ -1,0 +1,314 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+
+<link rel="import" href="../../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-from-bottom-animation.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-down-animation.html">
+
+<dom-module id="add-service-dialog">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            paper-dialog {
+                bottom: 0;
+                right: 0;
+                position: fixed;
+                margin: 0;
+                width: 420px;
+            }
+
+            .title {
+                font-size: 18px;
+                text-align: center;
+                margin: 0;
+
+                text-align: start;
+                flex: 1;
+            }
+
+            .header {
+                font-size: 24px;
+                padding: 24px 24px 0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .container {
+                padding: 0;
+                margin: 0;
+            }
+
+            paper-textarea {
+                --paper-input-container-underline: {
+                    display: none;
+                }
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+
+                --paper-input-container: {
+                    border: 1px solid rgba(0, 0, 0, 0.30);
+                    border-radius: 5px;
+                    padding: 8px;
+                    margin: 24px;
+                    height: 140px;
+                }
+            }
+
+            .items {
+                padding: 0 40px;
+            }
+
+            .summary-item {
+                display: flex;
+                align-items: center;
+                margin-bottom: 16px;
+                text-align: end;
+            }
+
+            .total-title {
+                flex: 2;
+            }
+
+            .buttons {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .buttons paper-button {
+                height: 50px;
+                border-top: 1px solid rgba(0, 0, 0, 0.30);
+                margin: 0;
+            }
+
+            .submit-button {
+                color: green;
+            }
+
+            .total, .total-input {
+                flex: 1;
+                margin-left: 40px;
+                font-size: 18px;
+            }
+
+            .total-input {
+                --paper-input-container-input: {
+                    font-size: 18px;
+                };
+            }
+
+            /* small screen */
+            @media (max-width: 560px) {
+
+                paper-dialog {
+                    width: auto;
+                    left: 0;
+                }
+            }
+
+        </style>
+
+    <paper-dialog id=dialog opened={{opened}} entry-animation="slide-from-bottom-animation" exit-animation="slide-down-animation" with-backdrop>
+        <div class=container>
+            <div class="header">Orden de servicio</div>
+            <paper-textarea no-label-float rows=5 label="Descripcion" value={{description}}></paper-textarea>
+            
+            <div class="items">
+                <div class=summary-item>
+                    <div class=total-title>Costo total</div>
+                    <paper-input type=number no-label-float class=total-input value={{cost}}><div slot="prefix">$</div></paper-input>
+                </div>
+                
+                <div class=summary-item>
+                    <div class=total-title>Pagar el dia de hoy</div>
+                    <paper-input type=number no-label-float class=total-input value={{payment}}><div slot="prefix">$</div></paper-input>
+                </div>
+
+                <div class=summary-item>
+                    <div class=total-title>Restante</div>
+                    <div class=total>${{_computeServiceRemainingCost(cost,payment)}}</div>
+                </div>
+            </div>
+            
+            <div class=buttons>
+                <paper-button class=submit-button on-click="_onSubmitServiceClick">Crear orden</paper-button>
+                <paper-button on-click="_onCancelServiceClick">Cancelar</paper-button>
+            </div>
+            
+            
+        </div>
+    </paper-dialog>  
+    
+    <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+    </template>
+
+    <script>
+        /**
+         * `add-service-dialog` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AddServiceDialog extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'add-service-dialog';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    cost: {
+                        type: Number,
+                        value: 0
+                    },
+                    payment: {
+                        type: Number,
+                        value: 0
+                    },
+                    description: String,
+                    uid: String
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            static get observers() {
+                return [
+                    '_openedObserver(opened)'
+                ];
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.dialog;
+                });
+            }
+
+            _onCancelServiceClick(e) {
+                this.closeServiceDialog();
+            }
+
+            closeServiceDialog() {
+                this.opened = false;
+            }
+
+            _onSubmitServiceClick(e) {
+                if (this.serviceInputsNull()) {
+                    console.log('service inputs null, exiting...');
+                    return;
+                }
+
+                if (!this.validatePayment()) {
+                    this.$.toast.text = 'El pago no puede ser mayor que el costo.';
+                    this.$.toast.open();
+                    console.log('service payment invalid, exiting...');
+                    return;
+                }
+
+                this.$.toast.text = `La orden de servicio a sido creado exitosamente.`;
+                this.$.toast.open();
+
+                let timestamp = moment().toDate();
+                let isFinished = (parseInt(this.cost) == parseInt(this.payment));
+                let service = {
+                    description: this.description,
+                    total: parseInt(this.cost),
+                    finished: isFinished,
+                    payments: [
+                        {
+                            payment: parseInt(this.payment),
+                            timestamp: timestamp
+                        }
+                    ]
+                }
+                var submitServiceEvent = new CustomEvent('create-service', {bubbles: true, composed: true, detail: {service: service, uid: this.uid}});
+                // Dispatch the event.
+                this.dispatchEvent(submitServiceEvent);
+
+                this.closeServiceDialog();
+            }
+
+            clearInputs() {
+                this.description = null;
+                this.cost = null;
+                this.payment = null;
+            }
+
+            validatePayment() {
+                console.log('service cost:', this.cost);
+                console.log('service payment:', this.payment);
+                console.log('valid:', (parseInt(this.cost) >= parseInt(this.payment)));
+                return (parseInt(this.cost) >= parseInt(this.payment));
+            }
+
+            _openedObserver(opened) {
+                if (!opened) this.clearInputs();
+            }
+
+            _computeServiceRemainingCost(cost,payment) {
+                let remaining = parseInt(cost) - parseInt(payment);
+                console.log('remaining:', remaining);
+
+                return (isNaN(remaining) ? 0 : remaining);
+            }
+
+            serviceInputsNull() {
+                var areNull = false;
+                switch (true) {
+                    case (this.description == null):
+                        this.$.toast.text = 'Por favor escriba una descripcion del servicio.';
+                        this.$.toast.open();
+                        areNull = true;
+                        break;
+                    case (this.cost == null):
+                        this.$.toast.text = 'Por favor escriba el costo del servicio.';
+                        this.$.toast.open();
+                        areNull = true;
+                        break;
+                    default:
+                        break;
+                }
+
+                return areNull;
+            }
+
+            
+
+        }
+
+        window.customElements.define(AddServiceDialog.is, AddServiceDialog);
+    </script>
+</dom-module>

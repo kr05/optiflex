@@ -1,0 +1,94 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="sale-details">
+    <template>
+        <style>
+            :host {
+                display: block;
+                padding: 24px 0 0 24px;
+            }
+
+            .header {
+                font-size: 16px;
+            }
+
+            .sub-header {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.54);
+            }
+
+            .divider {
+                margin-left: 64px;
+                padding-top: 24px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            }
+        </style>
+
+        <div class=header>{{armazon.marca}} - {{armazon.modelo}}</div>
+        <div class=sub-header>{{micas.tratamiento}}, {{micas.material}}</div>
+
+        
+        <template is="dom-if" if={{divider}}>
+            <div class=divider></div>
+        </template>
+        
+
+    </template>
+
+    <script>
+        /**
+         * `sale-details` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SaleDetails extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'sale-details';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    armazon: Object,
+                    micas: Object,
+                    divider: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+        }
+
+        window.customElements.define(SaleDetails.is, SaleDetails);
+    </script>
+</dom-module>

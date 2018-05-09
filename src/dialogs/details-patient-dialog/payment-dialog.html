@@ -1,0 +1,572 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+
+<link rel="import" href="../../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-from-bottom-animation.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-down-animation.html">
+
+<dom-module id="payment-dialog">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            #dialog {
+                bottom: 0;
+                right: 0;
+                position: fixed;
+                margin: 0;
+                width: 420px;
+                max-height: 80vh;
+            }
+
+            .title {
+                font-size: 18px;
+                text-align: center;
+                margin: 0;
+
+                text-align: start;
+                flex: 1;
+            }
+
+            .container {
+                padding: 0;
+                margin: 0;
+            }
+
+            paper-textarea {
+                --paper-input-container-underline: {
+                    display: none;
+                }
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+
+                --paper-input-container: {
+                    border: 1px solid rgba(0, 0, 0, 0.30);
+                    border-radius: 5px;
+                    padding: 8px;
+                    margin: 24px;
+                    height: 140px;
+                };
+                border-top: 1px solid rgba(0, 0, 0, 0.12);
+            }
+
+            .header {
+                font-size: 24px;
+                padding: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .summary-item {
+                display: flex;
+                align-items: center;
+                margin-bottom: 16px;
+                text-align: end;
+            }
+
+            .single-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 16px;
+            }
+
+            .total-title {
+                flex: 2;
+            }
+
+            .vertical-buttons {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .vertical-buttons paper-button {
+                height: 50px;
+                border-top: 1px solid rgba(0, 0, 0, 0.30);
+                margin: 0;
+            }
+
+            .submit-button {
+                color: green;
+            }
+
+            .total, .total-input {
+                flex: 1;
+                margin-left: 40px;
+                font-size: 18px;
+            }
+
+            .total-input {
+                --paper-input-container-input: {
+                    font-size: 18px;
+                };
+            }
+
+            .single-service-order {
+                display: flex;
+                border-top: 1px solid rgba(0, 0, 0, 0.12);
+                padding: 16px;
+            }
+
+            .service-details-container {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+            }
+
+            .service-pay-btn {
+                color: whitesmoke;
+                background-color: var(--accent-color);
+                align-self: flex-end;
+                font-size: 12px;
+            }
+
+            .service-total {
+                font-size: 18px;
+                padding: 8px;
+            }
+
+            .service-total-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .id {
+                font-weight: 500;
+            }
+
+            .desc {
+                font-size: 13px;
+            }
+
+            .confirm-inputs-container {
+                display: flex;
+            }
+
+            .confirm-inputs-container paper-input {
+                margin: 8px;
+            }
+
+            .confirm-total-input {
+                --paper-input-container-underline: {
+                    display: none;
+                }
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+            }
+
+            .cancel-btn {
+                color: red;
+            }
+
+            .confirm-btn {
+                color: var(--app-primary-color);
+            }
+
+            .items {
+                max-height: 400px;
+                overflow-y: auto;
+            }
+
+            /* small screen */
+            @media (max-width: 560px) {
+
+                #dialog {
+                    width: auto;
+                    left: 0;
+                }
+
+
+            }
+        </style>
+
+        <paper-dialog id=dialog opened={{opened}} entry-animation="slide-from-bottom-animation" exit-animation="slide-down-animation" with-backdrop>
+            <div class=container>
+                <div class="header">Resumen de pago</div>
+                <div class="items">
+                    <template is=dom-if if={{order}}>
+                        <div class=single-service-order>
+                            <div class=service-details-container>
+                                <div class=id>{{_computeShortId(order.id)}}</div>
+                                <ul>
+                                    <li>
+                                        <div class=desc>{{order.saleDetails.armazon.marca}} - {{order.saleDetails.armazon.modelo}}</div>
+                                    </li>
+                                    <li>
+                                        <div class=desc>{{order.saleDetails.micas.tratamiento}} - {{order.saleDetails.micas.material}}</div>        
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class=service-total-container>
+                                <div class=service-total>${{order.curTotal}}</div>
+                                <paper-button class=service-pay-btn on-click="_onPayOrderClick">PAGAR</paper-button>
+                            </div>
+                        </div>
+                    </template>
+                    <template is=dom-repeat items={{serviceOrders}} as=serviceOrder>
+                        <div class=single-service-order>
+                            <div class=service-details-container>
+                                <div class=id>{{serviceOrder.id}}</div>
+                                <ul>
+                                    <li>
+                                        <div class=desc>{{serviceOrder.description}}</div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class=service-total-container>
+                                <div class=service-total>${{serviceOrder.curTotal}}</div>
+                                <paper-button class=service-pay-btn on-click="_onPayServiceClick">PAGAR</paper-button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- <paper-textarea no-label-float rows=5 label="Notas" value={{notes}}></paper-textarea> -->
+                
+                <div class=vertical-buttons>
+                    <!-- <paper-button class=submit-button on-click="_onSubmitPaymentClick">Realizar pago</paper-button> -->
+                    <paper-button class=cancel-btn on-click="_onCancelPaymentClick">Cancelar</paper-button>
+                </div>
+                
+                
+            </div>
+        </paper-dialog>
+
+        <paper-dialog id=confirmDialog modal>
+            <h2>Pagar {{confirmPaymentType}}</h2>
+            <div class=confirm-inputs-container>
+                <paper-input type=number class=confirm-total-input label=Total readonly always-float-label value={{confirmTotal}}></paper-input>
+                <paper-input type=number label=Pago always-float-label value={{confirmPago}}></paper-input>
+            </div>
+            <div class=buttons>
+                <paper-button class=cancel-btn on-tap=closeConfirmDialog>Mejor no</paper-button>
+                <paper-button class=confirm-btn on-tap=_completePayment>Pagar</paper-button>
+            </div>
+        </paper-dialog>
+            
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+    </template>
+
+    <script>
+        /**
+         * `payment-dialog` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class PaymentDialog extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'payment-dialog';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    uid: String,
+                    serviceOrders: {
+                        type: Array,
+                        value: []
+                    },
+                    _handler: Object,
+                    order: Object,
+                    service: Object
+                };
+            }
+
+            static get observers() {
+                return [
+                    '_openedObserver(opened)',
+                    '_idObserver(uid)'
+                ];
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            _onCancelPaymentClick(e) {
+                this.opened = false;
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.confirmDialog;
+                });
+            }
+
+            clearInputs() {
+                this.notes = null;
+            }
+
+            _openedObserver(opened) {
+                if (!opened) this.uid = null;
+            }
+
+            _reset() {
+                this.set('serviceOrders', []);
+                this.set('order', null);
+                this.set('service', null);
+            }
+
+            _resetPendingOrder() {
+                this.order = null;
+            }
+
+            _updatePendingOrder(order, id) {
+                order['id'] = id;
+                order['curTotal'] = this._computeOrderTotal(order);
+                this.set('order', order);
+            }
+
+            _idObserver(uid) {
+                if (!uid) {
+                    this._reset();
+                }
+                var db = firebase.firestore();
+                db.collection(`patients/${uid}/serviceOrders`).where('finished', '==', false).onSnapshot(snapshot => {
+                    let docs = snapshot.docs;
+                    let changes = snapshot.docChanges;
+                    console.log('unfinished service orders data:', changes);
+                    changes.forEach(change => {
+                        let data = change.doc.data();
+                        data['id'] = change.doc.id;
+                        data['curTotal'] = this._computeServiceTotal(data);
+                        switch (change.type) {
+                            case 'added':
+                                var index = -1;
+                                (this.serviceOrders).filter((order, idx) => {
+                                    if (order.id == change.doc.id) {
+                                        index = idx;
+                                        console.log('does service order exist:', index);
+                                    }
+                                });
+                                if (index < 0) {
+                                    this.push('serviceOrders', data);
+                                }
+                                break;
+                            case 'modified':
+                                var index = -1;
+                                (this.serviceOrders).filter((order, idx) => {
+                                    if (order.id == change.doc.id) {
+                                        index = idx;
+                                        console.log('does service order exist:', index);
+                                    }
+                                });
+                                console.log('current modified data:', data);
+                                if (index < 0) {
+                                    console.log('pushing service order...');
+                                    this.push('serviceOrders', data);
+                                } else if (change.oldIndex === change.newIndex && index >= 0) {
+                                    console.log('updating service order...');
+                                    this.splice('serviceOrders', index, 1, data);
+                                }
+                                break;
+                            case 'removed':
+                                var index = -1;
+                                const result = (this.serviceOrders).filter((order, idx) => {
+                                    if (order.id == change.doc.id) {
+                                        index = idx;
+                                        console.log('does service order exist:', index);
+                                    }
+                                });
+                                if (index >= 0) {
+                                    this.splice('serviceOrders', index, 1);
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    });
+                });
+
+                db.doc(`pendingExams/${uid}`).onSnapshot(snapshot => {
+                    console.log('pending exam:', snapshot.data())
+                    if (this._handler) {
+                        console.log('disconnecting listeners...');
+                        var unsubscribe = this._handler;
+                        unsubscribe();
+                        this.set('_handler', null);
+                        this._resetPendingOrder();
+                    }
+
+                    if (!uid) {
+                        return;
+                    }
+
+                    if (!snapshot.exists) {
+                            console.log('doc does not exits, exiting...');
+                            return;
+                        }
+
+                    if (snapshot.data().saleDetails && snapshot.data().saleDetails.finished) {
+                        return;
+                    }
+
+                    if (!snapshot.data().states['finish-sale']) {
+                        return;
+                    }
+
+                    
+
+                    var db = firebase.firestore(); 
+                    this._handler = db.doc(`pendingExams/${uid}`).onSnapshot(doc => {
+
+                        if (!doc.exists) {
+                            console.log('doc does not exits, exiting...');
+                            return;
+                        }
+
+                        this._updatePendingOrder(doc.data(), uid);
+                    });
+                });
+            }
+
+            _computeOrderTotal(order) {
+                let armazon = order.saleDetails.armazon;
+                let micas = order.saleDetails.micas;
+                var paid = 0;
+                let paymentsArr = order.saleDetails.payments;
+                paymentsArr.forEach(payment => {
+                    paid += parseInt(payment.payment);
+                });
+                return (parseInt(armazon.precio) + parseInt(micas.precioTratamiento) + parseInt(micas.precioMaterial) - parseInt(paid));
+            }
+
+            _computeServiceTotal(serviceOrder) {
+                let total = parseInt(serviceOrder.total);
+                var paid = 0;
+                let paymentsArr = serviceOrder.payments;
+                paymentsArr.forEach(payment => {
+                    paid += parseInt(payment.payment);
+                });
+                return (total - paid);
+            }
+
+            _onPayOrderClick(e) {
+                console.log('on pay order click:', this.order);
+                this.confirmPaymentType = 'orden';
+                this.confirmTotal = this.order.curTotal;
+                this.$.confirmDialog.open();
+            }
+
+            _onPayServiceClick(e) {
+                console.log('on pay service click:', e.model.serviceOrder);
+                this.confirmPaymentType = 'servicio';
+                this.confirmTotal = e.model.serviceOrder.curTotal;
+                this.service = e.model.serviceOrder;
+                this.$.confirmDialog.open();
+            }
+
+            resetConfirmDialog() {
+                this.confirmPaymentType = null;
+                this.confirmTotal = null;
+                this.confirmPago = null;
+                this.service = null;
+            }
+
+            closeConfirmDialog() {
+                this.resetConfirmDialog();
+                this.$.confirmDialog.close();
+            }
+
+            isPaymentValid() {
+                let curTotal = parseInt(this.confirmTotal);
+                let curPago = parseInt(this.confirmPago);
+                return (curPago <= curTotal);
+            }
+
+            nullInputs() {
+                if (!this.confirmPago) {
+                    return true;
+                }
+
+                return false;
+            }
+
+            _completePayment(e) {
+                if (this.nullInputs()) {
+                    this.$.toast.text = 'Por favor ingrese el pago.';
+                    this.$.toast.open();
+                    return;
+                }
+
+                if (!this.isPaymentValid()) {
+                    this.$.toast.text = 'El pago es mayor que el total.';
+                    this.$.toast.open();
+                    return;
+                }
+
+                let curTotal = parseInt(this.confirmTotal);
+                let curPago = parseInt(this.confirmPago);
+                let isFinished = (curTotal === curPago);
+
+                console.log('current order:', this.order);
+                console.log('current service:', this.service);
+
+                var updatedPaymentsArr;
+                if (this.confirmPaymentType === 'orden') {
+                    updatedPaymentsArr = this.order.saleDetails.payments ? _.cloneDeep(this.order.saleDetails.payments) : [];
+                } else if (this.confirmPaymentType === 'servicio') {
+                    updatedPaymentsArr = this.service.payments ? _.cloneDeep(this.service.payments) : [];    
+                }
+
+                const curPayment = {
+                    payment: curPago,
+                    timestamp: moment().toDate()
+                }
+                console.log('cur payment:', curPayment)
+                updatedPaymentsArr.push(curPayment);
+
+                console.log('updated payments arr:', updatedPaymentsArr);
+
+                let detail = {
+                    payments: updatedPaymentsArr,
+                    finished: isFinished,
+                    type: this.confirmPaymentType,
+                    uid: this.uid
+                }
+                if (this.service) detail['id'] = this.service.id;
+
+                var confirmPaymentEvent = new CustomEvent('receive-payment', {bubbles: true, composed: true, detail: detail});
+                this.dispatchEvent(confirmPaymentEvent);
+
+                this.closeConfirmDialog();
+            }
+
+            _computeShortId(id) {
+                console.log('computing short id:', id);
+                return (id ? id.slice(-6) : '');
+            }
+
+        }
+
+        window.customElements.define(PaymentDialog.is, PaymentDialog);
+    </script>
+</dom-module>

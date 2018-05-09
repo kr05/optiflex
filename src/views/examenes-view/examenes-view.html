@@ -1,0 +1,79 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="single-exam.html">
+
+<dom-module id="examenes-view">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            .empty-view {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 20px;
+            }
+
+            single-exam {
+                border-bottom: 1px solid var(--light-border);
+            }
+            
+        </style>
+
+        <template is="dom-if" if={{!pendingExams.length}}>
+            <div class=empty-view>No hay examenes pendientes...</div>
+        </template>
+
+        <template is="dom-repeat" items={{pendingExams}} 
+            as=exam>
+            <single-exam on-click="_onPendingExamClick" exam={{exam}} date={{_computeDate(exam.states.create-exam)}}></single-exam>
+        </template>
+
+    </template>
+
+    <script>
+        /**
+         * `examenes-pendientes-view` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class ExamenesView extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'examenes-view';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    pendingExams: {
+                        type: Array,
+                        live: true,
+                        collection: 'pendingExams'
+                    },
+                };
+            }
+
+            _computeDate(date) {
+                console.log('date:', date)
+                return moment(date.seconds).locale('es').format('MMMM D, h:mm:ssa');
+            }
+
+            _onPendingExamClick(e) {
+                this.dispatchEvent(new CustomEvent('open-dialog', {detail: {id: e.model.exam['__id__'], type: 'details', subType: 'exam'}}));
+            }
+
+        }
+
+        window.customElements.define(ExamenesView.is, ExamenesView);
+    </script>
+</dom-module>

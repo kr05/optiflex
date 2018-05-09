@@ -1,0 +1,122 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+
+<link rel="import" href="../../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-from-bottom-animation.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-down-animation.html">
+<link rel="import" href="../../agave-components/sale-details/sale-details.html">
+<link rel="import" href="../../agave-components/exam-results-view/exam-results-view.html">
+<link rel="import" href="../../agave-components/payment-details/payment-details.html">
+
+<dom-module id="receipt-details-sheet">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            paper-dialog {
+                bottom: 0;
+                right: 0;
+                position: fixed;
+                margin: 0;
+                width: 420px;
+            }
+
+            .container {
+                padding: 0;
+                margin: 0;
+            }
+
+            .header {
+                font-size: 24px;
+                padding: 24px 24px 0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            exam-results-view {
+                padding-bottom: 16px;
+            }
+
+            payment-details {
+                padding-bottom: 32px;
+            }
+
+            /* small screen */
+            @media (max-width: 560px) {
+
+                paper-dialog {
+                    width: auto;
+                    left: 0;
+                }
+            }
+
+        </style>
+
+        <paper-dialog id=dialog opened={{opened}} entry-animation="slide-from-bottom-animation" exit-animation="slide-down-animation" with-backdrop>
+            <div class=container>
+                <div class="header">Recibo de compra</div>
+                <sale-details divider armazon={{order.armazon}} micas={{order.micas}}></sale-details>
+                <payment-details payments={{order.payments}} total={{order.total}}></payment-details>
+            </div>
+        </paper-dialog>  
+
+    </template>
+
+    <script>
+        /**
+         * `receipt-details-sheet` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class ReceiptDetailsSheet extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'receipt-details-sheet';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    opened: {
+                        type: Boolean,
+                        value: false
+                    },
+                    order: Object
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+        }
+
+        window.customElements.define(ReceiptDetailsSheet.is, ReceiptDetailsSheet);
+    </script>
+</dom-module>

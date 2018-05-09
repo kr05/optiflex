@@ -52,7 +52,7 @@
             
             <template is="dom-if" if={{_displayCreateOptions(type)}}>
                 <div class=title>Creando</div>
-                <paper-button on-click="_onSubmitClick">Guardar</paper-button>
+                <paper-button on-click="_onSubmitClick">{{_computeSubmitButtonText(waiting)}}</paper-button>
             </template>
             
 

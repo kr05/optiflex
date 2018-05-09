@@ -1,0 +1,112 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+
+<link rel="import" href="../../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-from-bottom-animation.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-down-animation.html">
+<link rel="import" href="../../agave-components/payment-details/payment-details.html">
+
+<dom-module id="service-details-sheet">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            paper-dialog {
+                bottom: 0;
+                right: 0;
+                position: fixed;
+                margin: 0;
+                width: 420px;
+            }
+
+            .container {
+                padding: 0;
+                margin: 0;
+            }
+
+            .header {
+                font-size: 24px;
+                padding: 24px 24px 0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            exam-results-view {
+                padding-bottom: 16px;
+            }
+
+            .title {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.54);
+                padding: 32px 16px 0;
+                font-weight: bold;
+            }
+
+            .desc {
+                margin: 4px 32px;
+            }
+
+            payment-details {
+                padding-bottom: 32px;
+            }
+
+            /* small screen */
+            @media (max-width: 560px) {
+
+                paper-dialog {
+                    width: auto;
+                    left: 0;
+                }
+            }
+
+        </style>
+
+        <paper-dialog id=dialog opened={{opened}} entry-animation="slide-from-bottom-animation" exit-animation="slide-down-animation" with-backdrop>
+            <div class=container>
+                <div class="header">Orden de servicio</div>
+                <div class="title">Descripcion</div>
+                <div class="desc">{{service.description}}</div>
+                <payment-details payments={{service.payments}} total={{service.total}}></payment-details>
+            </div>
+        </paper-dialog>  
+
+    </template>
+
+    <script>
+        /**
+         * `service-details-sheet` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class ServiceDetailsSheet extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'service-details-sheet';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    opened: {
+                        type: Boolean,
+                        value: false
+                    },
+                    service: Object
+                };
+            }
+
+        }
+
+        window.customElements.define(ServiceDetailsSheet.is, ServiceDetailsSheet);
+    </script>
+</dom-module>

@@ -1,0 +1,125 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="exam-results-view">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                flex-direction: column;
+                padding: 16px 8px 0 8px;
+            }
+            
+            .results-container {
+                display: flex;
+                align-items: center;
+            }
+
+            .header {
+                font-size: 20px;
+                font-weight: bold;
+                flex: 1;
+                text-align: center;
+            }
+
+            .single-result {
+                font-size: 12px;
+                color: rgba(0, 0, 0, 0.54);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                flex: 1;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            }
+
+            .single-result span {
+                font-size: 15px;
+                color: rgba(0, 0, 0, 0.87);
+            }
+
+        </style>
+
+        <div class=results-container>
+            <span class=header>OD</span>
+            <div class=single-result>Esfera<span>{{examResults.right.esfera}}</span></div>
+            <div class=single-result>Cilindro<span>{{examResults.right.cilindro}}</span></div>
+            <div class=single-result>Eje<span>{{examResults.right.eje}}</span></div>
+            <div class=single-result>Adicion<span>{{examResults.right.adicion}}</span></div>
+            <div class=single-result>DIP<span>{{examResults.right.dip}}</span></div>
+            <div class=single-result>Altura<span>{{examResults.right.altura}}</span></div>
+        </div>
+
+        <div class=results-container>
+            <span class=header>OI</span>
+            <div class=single-result>Esfera<span>{{examResults.left.esfera}}</span></div>
+            <div class=single-result>Cilindro<span>{{examResults.left.cilindro}}</span></div>
+            <div class=single-result>Eje<span>{{examResults.left.eje}}</span></div>
+            <div class=single-result>Adicion<span>{{examResults.left.adicion}}</span></div>
+            <div class=single-result>DIP<span>{{examResults.left.dip}}</span></div>
+            <div class=single-result>Altura<span>{{examResults.left.altura}}</span></div>
+        </div>
+        <div class=results-container></div>
+    </template>
+
+    <script>
+        /**
+         * `exam-results-view` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class ExamResultsView extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'exam-results-view';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    examResults: Object
+                };
+            }
+
+            static get observers() {
+                return [
+                '_examResultsObserver(examResults)',
+                ];
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _examResultsObserver(examResults) {
+                console.log('exam results observer:', examResults);
+                
+            }
+
+        }
+
+        window.customElements.define(ExamResultsView.is, ExamResultsView);
+    </script>
+</dom-module>

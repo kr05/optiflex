@@ -25,19 +25,6 @@
                 display: none;
             }
 
-            .image-container {
-                height: 280px;
-                width: 100%;
-                margin-top: 8px;
-                background-color: #c4c4c4;
-            }
-
-            .image {
-                height: 100%;
-                width: 100%;
-                object-fit: cover;
-            }
-
             paper-fab {
                 position: relative;
                 left: calc(100% - 72px);
@@ -46,24 +33,6 @@
 
             paper-progress {
                 width: 100%;
-            }
-
-            .info-name-edit {
-                position: relative;
-                bottom: 73px;
-                --paper-input-container-input-color: #fafafa;
-                --paper-input-container-input: {
-                    font-weight: bold;
-                    font-size: 30px;
-                    background-color: rgba(0, 0, 0, 0.30);
-                };
-                --paper-input-container-label: {
-                    background-color: rgba(0, 0, 0, 0.30);
-                    color: #fafafa;
-                };
-                --paper-input-container-label-focus: {
-                    color: #fafafa;
-                };
             }
 
             .account-dropdown {
@@ -75,7 +44,7 @@
         <input type="file" accept="image/*" on-change="_onImageUploaded" id="fileInput">
 
         <paper-dialog modal id=dialog opened={{opened}}>
-            <agave-dialog-toolbar waiting={{waiting}} type=create class=toolbar edit-state={{editState}}
+            <agave-dialog-toolbar waiting={{waiting}} type=create class=toolbar
                 on-cancel="cancelDialog"
                 on-submit="createUser"></agave-dialog-toolbar>
             

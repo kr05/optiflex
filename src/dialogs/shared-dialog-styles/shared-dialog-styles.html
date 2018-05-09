@@ -85,6 +85,37 @@
                 };
             }
 
+            .info-name-edit {
+                position: relative;
+                bottom: 73px;
+                --paper-input-container-input-color: #fafafa;
+                --paper-input-container-input: {
+                    font-weight: bold;
+                    font-size: 30px;
+                    background-color: rgba(0, 0, 0, 0.30);
+                };
+                --paper-input-container-label: {
+                    background-color: rgba(0, 0, 0, 0.30);
+                    color: #fafafa;
+                };
+                --paper-input-container-label-focus: {
+                    color: #fafafa;
+                };
+            }
+
+            .image-container {
+                height: 280px;
+                width: 100%;
+                margin-top: 8px;
+                background-color: #c4c4c4;
+            }
+
+            .image {
+                height: 100%;
+                width: 100%;
+                object-fit: cover;
+            }
+
             /* small screen */
             @media (max-width: 560px) {
                 #dialog {
