@@ -531,6 +531,7 @@
             }
 
             _formatDate(date) {
+                if (!date) return;
                 return moment(date).locale('es').format('MMMM D, h:mma');
             }
 
@@ -578,7 +579,17 @@
                 this.$.bottomMenu.close();
 
                 var states = {}
-                states['create-exam'] = moment().toDate();
+                states['create-exam'] = moment().valueOf();
+                
+                // enables firestore queries
+                states['finish-exam'] = 0;
+                states['finish-sale'] = 0;
+                states['lab-order-ready'] = 0;
+                states['micas-finished'] = 0;
+                states['order-complete'] = 0;
+                states['order-paid'] = 0;
+                states['order-ready'] = 0;
+                states['order-received'] = 0;
 
                 const newExam = {
                     name: this.data.name,

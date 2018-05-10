@@ -1,4 +1,12 @@
 <link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../../views/examenes-view/single-exam.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../agave-components/agave-dialog-toolbar/agave-dialog-toolbar.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
 
 <dom-module id="details-exam-dialog">
     <template>
@@ -6,9 +14,122 @@
             :host {
                 display: block
             }
+
+            #dialog {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                width: 420px;
+                position: fixed;
+                top: 0;
+                right: 0;
+                margin: 0;
+            }
+
+            .toolbar {
+                margin-top: 0;
+                padding: 0;
+            }
+
+            paper-dialog-scrollable {
+                flex: 1;
+                margin: 0;
+                --paper-dialog-scrollable: {
+                    padding: 0;
+                    height: calc(100vh - 64px);
+                }
+            }
+
+            .sub-header {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.54);
+                padding: 0 16px;
+                font-weight: bold;
+            }
+
+            single-exam {
+                --single-exam-details-container: {
+                    border-bottom: 1px solid #ccc;
+                    flex: 1;
+                };
+                margin-bottom: 20px;
+            }
+
+            .results-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                grid-column-gap: 54px;
+                padding: 0 16px 32px;
+            }
+
+            paper-textarea {
+                --paper-input-container-underline: {
+                    display: none;
+                }
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+
+                --paper-input-container: {
+                    border: 1px solid rgba(0, 0, 0, 0.12);
+                    border-radius: 5px;
+                    padding: 8px;
+                    margin: 24px;
+                    height: 100px;
+                }
+
+            }
+
+            /* small screen */
+            @media (max-width: 560px) {
+                #dialog {
+                    width: auto;
+                    position: fixed;
+                    top: 0;
+                    right: 0;
+                    left: 0;
+                    margin: 0;
+                    bottom: 0;
+                }
+            }
         </style>
 
-        
+        <paper-dialog modal id=dialog opened={{opened}}>
+
+            <agave-dialog-toolbar title="Examen pendiente" waiting={{waiting}} type=create class=toolbar
+                on-cancel="cancelDialog"
+                on-submit="finishExam"></agave-dialog-toolbar>
+            
+            <paper-dialog-scrollable>
+                <single-exam exam={{exam}} date={{_computeDate(exam.states.create-exam)}}></single-exam>
+                <div class="info-container">
+                    <div class=sub-header>Ojo iqzuierdo</div>
+                    <div class=results-container>
+                        <paper-input value={{esferaIzquierdo}} label="Esfera"></paper-input>
+                        <paper-input value={{cilindroIzquierdo}} label="Cilindro"></paper-input>
+                        <paper-input value={{ejeIzquierdo}} label="Eje"></paper-input>
+                        <paper-input value={{adicionIzquierdo}} label="Adicion"></paper-input>
+                        <paper-input value={{dipIzquierdo}} label="DIP"></paper-input>
+                        <paper-input value={{alturaIzquierdo}} label="Altura"></paper-input>
+                    </div>
+
+                    <div class=sub-header>Ojo derecho</div>
+                    <div class=results-container>
+                        <paper-input value={{esferaDerecho}} label="Esfera"></paper-input>
+                        <paper-input value={{cilindroDerecho}} label="Cilindro"></paper-input>
+                        <paper-input value={{ejeDerecho}} label="Eje"></paper-input>
+                        <paper-input value={{adicionDerecho}} label="Adicion"></paper-input>
+                        <paper-input value={{dipDerecho}} label="DIP"></paper-input>
+                        <paper-input value={{alturaDerecho}} label="Altura"></paper-input>
+                    </div>
+
+                    <paper-textarea no-label-float rows=5 label="Notas" value={{notes}}></paper-textarea>
+
+                </div>
+            </paper-dialog-scrollable>
+        </paper-dialog>
+
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
 
     </template>
 
@@ -21,7 +142,7 @@
          * @polymer
          * @extends {Polymer.Element}
          */
-        class DetailsExamDialog extends Polymer.Element {
+        class DetailsExamDialog extends Polymer.FirestoreMixin(Polymer.Element) {
             /**
              * String providing the tag name to register the element under.
              */
@@ -34,7 +155,36 @@
              */
             static get properties() {
                 return {
-                    
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    waiting: {
+                        type: Boolean,
+                        value: false
+                    },
+                    id: {
+                        type: String,
+                        notify: true
+                    },
+                    exam: {
+                        type: Object,
+                        doc: 'pendingExams/{id}'
+                    },
+                    esferaIzquierdo: String,
+                    ejeIzquierdo: String,
+                    cilindroIzquierdo: String,
+                    adicionIzquierdo: String,
+                    dipIzquierdo: String,
+                    alturaIzquierdo: String,
+                    esferaDerecho: String,
+                    ejeDerecho: String,
+                    cilindroDerecho: String,
+                    adicionDerecho: String,
+                    dipDerecho: String,
+                    alturaDerecho: String,
+                    notes: String
                 };
             }
 
@@ -45,8 +195,146 @@
                 super.ready();
 
                 Polymer.RenderStatus.afterNextRender(this, function() {
-                    
+                    this.$.toast.fitInto = this.$.dialog;
                 });
+            }
+
+            resetData() {
+                console.log('resetting exam data...');
+                this.set('ejeIzquierdo', null);
+                this.set('cilindroIzquierdo', null);
+                this.set('esferaIzquierdo', null);
+                this.set('adicionIzquierdo', null);
+                this.set('dipIzquierdo', null);
+                this.set('alturaIzquierdo', null);
+                this.set('ejeDerecho', null);
+                this.set('cilindroDerecho', null);
+                this.set('esferaDerecho', null);
+                this.set('adicionDerecho', null);
+                this.set('dipDerecho', null);
+                this.set('alturaDerecho', null);
+                this.set('notes', null);
+            }
+
+            cancelDialog() {
+                this.resetData();
+                this.opened = false;
+            }
+
+            _nullInputs() {
+                switch (true) {
+                    case (!this.ejeIzquierdo):
+                        this.$.toast.text = 'Por favor ingrese el eje izquierdo.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.esferaIzquierdo):
+                        this.$.toast.text = 'Por favor ingrese la esfera izquierda.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.cilindroIzquierdo):
+                        this.$.toast.text = 'Por favor ingrese el cilindro izquierdo.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.adicionIzquierdo):
+                        this.$.toast.text = 'Por favor ingrese la adicion izquierda.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.dipIzquierdo):
+                        this.$.toast.text = 'Por favor ingrese la DIP izquierda.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.alturaIzquierdo):
+                        this.$.toast.text = 'Por favor ingrese la altura izquierda.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.ejeDerecho):
+                        this.$.toast.text = 'Por favor ingrese el eje derecho.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.esferaDerecho):
+                        this.$.toast.text = 'Por favor ingrese la esfera derecha.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.cilindroDerecho):
+                        this.$.toast.text = 'Por favor ingrese el cilindro derecho.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.adicionDerecho):
+                        this.$.toast.text = 'Por favor ingrese la adicion derecha.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.dipDerecho):
+                        this.$.toast.text = 'Por favor ingrese la DIP derecha.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.alturaDerecho):
+                        this.$.toast.text = 'Por favor ingrese la altura derecha.';
+                        this.$.toast.open();
+                        return true;
+                    default:
+                        break;
+                    
+                    return false;
+                }
+            }
+
+            finishExam(e) {
+                this.waiting = true;
+                if(this._nullInputs()) {
+                    this.waiting = false;
+                    return;
+                };
+
+                let left = {
+                    esfera: this.esferaIzquierdo,
+                    eje: this.ejeIzquierdo,
+                    cilindro: this.cilindroIzquierdo,
+                    adicion: this.adicionIzquierdo,
+                    dip: this.dipIzquierdo,
+                    altura: this.alturaIzquierdo
+                }
+
+                let right = {
+                    esfera: this.esferaDerecho,
+                    eje: this.ejeDerecho,
+                    cilindro: this.cilindroDerecho,
+                    adicion: this.adicionDerecho,
+                    dip: this.dipDerecho,
+                    altura: this.alturaDerecho
+                }
+
+                let notesArray = this.exam.notes ? _.cloneDeep(this.exam.notes) : [];                
+                if(this.notes) notesArray.push({note: this.notes, source: 'finish-exam'});
+                
+                let examResults = {
+                    left: left,
+                    right: right
+                }
+
+                console.log('submitting exam results:', examResults);
+
+                var db = firebase.firestore();
+                db.doc(`pendingExams/${this.id}`).update({
+                    'examResults': examResults,
+                    'states.finish-exam': moment().valueOf(),
+                    'notes': notesArray
+                }).then(response => {
+                    console.log('exam update successful!');
+                    this.waiting = false;
+                    this.$.toast.text = 'Examen de vista a sido terminada.';
+                    this.$.toast.open();
+                    this.cancelDialog();                
+                }).catch(err => {
+                    console.log('exam update ERROR:', err);
+                    this.$.toast.text = 'No se a podido guardar el examen de vista.';
+                    this.$.toast.open();
+                    this.waiting = false;
+                });
+            }
+
+            _computeDate(date) {
+                if (!date) return;
+                return moment(date).locale('es').format('MMMM D, h:mma');
             }
 
         }

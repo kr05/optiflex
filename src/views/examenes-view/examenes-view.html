@@ -58,14 +58,18 @@
                     pendingExams: {
                         type: Array,
                         live: true,
-                        collection: 'pendingExams'
+                        collection: 'pendingExams',
+                        query: (q, el) => {
+                            q = q.orderBy('states.create-exam', 'asc').where('states.finish-exam', '==', 0)
+                            return q;
+                        }
                     },
                 };
             }
 
             _computeDate(date) {
-                console.log('date:', date)
-                return moment(date.seconds).locale('es').format('MMMM D, h:mm:ssa');
+                if (!date) return;
+                return moment(date).locale('es').format('MMMM D, h:mma');
             }
 
             _onPendingExamClick(e) {

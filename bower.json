@@ -30,7 +30,8 @@
     "paper-item": "PolymerElements/paper-item#^2.1.1",
     "iron-collapse": "PolymerElements/iron-collapse#^2.2.1",
     "moment-timezone": "^0.5.16",
-    "paper-checkbox": "PolymerElements/paper-checkbox#^2.0.4"
+    "paper-checkbox": "PolymerElements/paper-checkbox#^2.0.4",
+    "paper-tabs": "PolymerElements/paper-tabs#^2.1.1"
   },
   "resolutions": {
     "polymer": "^2.0.0"

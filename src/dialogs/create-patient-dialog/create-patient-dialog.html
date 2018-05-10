@@ -270,6 +270,7 @@
                 this.waiting = true;
 
                 if (this.nullInputs()) {
+                    this.waiting = false;
                     return;
                 }
                 

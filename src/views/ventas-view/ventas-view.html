@@ -1,0 +1,153 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../examenes-view/single-exam.html">
+
+<dom-module id="ventas-view">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            .empty-view {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 20px;
+            }
+
+            paper-tabs {
+                background-color: var(--app-primary-color);
+                color: whitesmoke;
+                --paper-tabs-selection-bar-color: var(--accent-color-light);
+            }
+
+            .selected-tab {
+                font-weight: bold;
+            }
+
+            single-exam {
+                border-bottom: 1px solid #ccc;
+            }
+        </style>
+
+        <paper-tabs attr-for-selected=name selected-class="selected-tab" selected="{{selected}}" fit-container>
+            <paper-tab name=new>RESULTADOS</paper-tab>
+            <paper-tab name=processing>EN PROCESO</paper-tab>
+            <paper-tab name=orders>TERMINADAS</paper-tab>
+        </paper-tabs>
+
+        <iron-pages fallback-selection=new attr-for-selected=name selected="{{selected}}">
+            <section name=new>
+                <template is="dom-if" if={{!pendingOrders.length}}>
+                    <div class=empty-view>No hay ventas nuevas...</div>
+                </template>
+                <template is="dom-repeat" items={{pendingOrders}} 
+                    as=order>
+                    <single-exam exam={{order}} date={{_computeDate(order.states.finish-exam)}} on-click="_onPendingOrderClick"></single-exam>
+                </template>
+            </section>
+
+            <section name=processing>
+                <template is="dom-if" if={{!processedOrders.length}}>
+                    <div class=empty-view>No hay ventas en proceso...</div>
+                </template>
+                <template is="dom-repeat" items={{processedOrders}} 
+                    as=order>
+                    <single-exam show-finished-icon finished={{order.states.lab-order-ready}} exam={{order}} date={{_computeDate(order.states.finish-sale)}} on-click="_onProcessedOrderClick"></single-exam>
+                </template>
+            </section>
+
+            <section name=orders>
+                <template is="dom-if" if={{!finishedOrders.length}}>
+                    <div class=empty-view>No hay ventas terminadas...</div>
+                </template>
+                <template id=orders is="dom-repeat" items={{finishedOrders}} 
+                    as=order>
+                    <single-exam exam={{order}} date={{_computeDate(order.states.order-ready)}} on-click="_onCompleteOrderClick"></single-exam>
+                </template>
+            </section>
+        </iron-pages>
+
+    </template>
+
+    <script>
+        /**
+         * `ventas-view` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class VentasView extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'ventas-view';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    selected: {
+                        type: String,
+                        value: 'pending'
+                    },
+                    pendingOrders: {
+                        type: Array,
+                        live: true,
+                        collection: 'pendingExams',
+                        query: (q, el) => {
+                            q = q.orderBy('states.finish-exam', 'asc').where('states.finish-exam', '>', 0).where('states.finish-sale', '==', 0)
+                            return q;
+                        }
+                    },
+                    processedOrders: {
+                        type: Array,
+                        live: true,
+                        collection: 'pendingExams',
+                        query: (q, el) => {
+                            q = q.orderBy('states.finish-sale', 'asc').where('states.finish-sale', '>', 0).where('states.order-ready', '==', 0)
+                            return q;
+                        }
+                    },
+                    finishedOrders: {
+                        type: Array,
+                        live: true,
+                        collection: 'pendingExams',
+                        query: (q, el) => {
+                            q = q.orderBy('states.order-ready', 'asc').where('states.order-ready', '>', 0).where('states.order-complete', '==', 0)
+                            return q;
+                        }
+                    }
+                };
+            }
+
+            _computeDate(date) {
+                if (!date) return;
+                return moment(date).locale('es').format('MMMM D, h:mma');
+            }
+
+            _onPendingOrderClick(e) {
+                this.dispatchEvent(new CustomEvent('open-ventas-dialog', {detail: {id: e.model.order['__id__'], type: 'pending'}}));
+            }
+
+            _onProcessedOrderClick(e) {
+                this.dispatchEvent(new CustomEvent('open-ventas-dialog', {detail: {id: e.model.order['__id__'], type: 'processed'}}));
+            }
+
+            _onCompleteOrderClick(e) {
+                this.dispatchEvent(new CustomEvent('open-ventas-dialog', {detail: {id: e.model.order['__id__'], type: 'finished'}}));
+            }
+
+        }
+
+        window.customElements.define(VentasView.is, VentasView);
+    </script>
+</dom-module>

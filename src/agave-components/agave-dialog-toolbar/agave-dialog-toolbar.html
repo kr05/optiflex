@@ -32,6 +32,13 @@
                 text-align: start;
                 flex: 1;
             }
+
+            /* small screen */
+            @media (max-width: 560px) {
+                .title {
+                    text-align: start;
+                }
+            }
         </style>
 
         <app-toolbar>
@@ -51,7 +58,7 @@
 
             
             <template is="dom-if" if={{_displayCreateOptions(type)}}>
-                <div class=title>Creando</div>
+                <div class=title>{{title}}</div>
                 <paper-button on-click="_onSubmitClick">{{_computeSubmitButtonText(waiting)}}</paper-button>
             </template>
             
@@ -84,7 +91,11 @@
                 return {
                     editState: Boolean,
                     waiting: Boolean,
-                    type: String
+                    type: String,
+                    title: {
+                        type: String,
+                        value: 'Creando'
+                    }
                 };
             }
 

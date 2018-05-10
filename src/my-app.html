@@ -34,6 +34,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="lazy-import" href="views/usuarios-view/usuarios-view.html">
 <link rel="lazy-import" href="views/pacientes-view/pacientes-view.html">
 <link rel="lazy-import" href="views/examenes-view/examenes-view.html">
+<link rel="lazy-import" href="views/ventas-view/ventas-view.html">
 <link rel="lazy-import" href="views/error-view/error-view.html">
 
 <link rel="import" href="dialogs/sign-in-dialog/sign-in-dialog.html">
@@ -41,6 +42,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <!-- lazy import dialogs -->
 <link rel="lazy-import" href="dialogs/details-user-dialog/details-user-dialog.html">
 <link rel="lazy-import" href="dialogs/details-patient-dialog/details-patient-dialog.html">
+<link rel="lazy-import" href="dialogs/details-exam-dialog/details-exam-dialog.html">
 <link rel="lazy-import" href="dialogs/create-user-dialog/create-user-dialog.html">
 <link rel="lazy-import" href="dialogs/create-patient-dialog/create-patient-dialog.html">
 
@@ -172,6 +174,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <usuarios-view on-open-dialog="_openDialogClick" name=usuarios></usuarios-view>
               <pacientes-view name=pacientes on-open-dialog="_openDialogClick"></pacientes-view>
               <examenes-view name=examenes on-open-dialog="_openDialogClick"></examenes-view>
+              <ventas-view name=ventas on-open-ventas-dialog="_openVentasDialogClick"></ventas-view>
               <error-view name=error></error-view>
         </iron-pages>
       </app-header-layout>
@@ -183,6 +186,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <sign-in-dialog id=signInDialog on-sign-in="_onSignInEvent" opened={{!signedIn}}></sign-in-dialog>
     <details-user-dialog id="userDetailsDialog"></details-user-dialog>
     <details-patient-dialog id="patientDetailsDialog"></details-patient-dialog>
+    <details-exam-dialog id="examDetailsDialog"></details-exam-dialog>
     <create-user-dialog id="userCreateDialog"></create-user-dialog>
     <create-patient-dialog id="patientCreateDialog"></create-patient-dialog>
 
@@ -291,6 +295,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.$[`${subType}${capitalizedType}Dialog`].id = id;
         }
         this.$[`${subType}${capitalizedType}Dialog`].opened = true;  
+      }
+
+      _openVentasDialogClick(e) {
+        console.log('open ventas dialog click:', e.detail)
+        // Load dialog import on demand.
+        var resolvedDialogUrl = this.resolveUrl(`dialogs/detail-${e.detail.type}-order-dialog/detail-${e.detail.type}-order-dialog.html`);
+            Polymer.importHref(
+              resolvedDialogUrl,
+              this._openVentasDialog(e.detail.id, e.detail.type),
+              null,
+              true);
+      }
+
+      _openVentasDialog(id, type) {
+        this.$[`${type}OrderDialog`].id = id;
+        this.$[`${type}OrderDialog`].opened = true;  
       }
 
     }
