@@ -1,0 +1,473 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../../views/laboratorio-view/single-lab-order.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+
+<link rel="import" href="../../agave-components/sale-details/sale-details.html">
+<link rel="import" href="../../agave-components/exam-results-view/exam-results-view.html">
+<link rel="import" href="../../agave-components/single-note/single-note.html">
+
+<link rel="import" href="pending-micas-view.html">
+<link rel="import" href="processing-lab-order-view.html">
+<link rel="import" href="finished-lab-order-view.html">
+
+<link rel="import" href="../../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-from-bottom-animation.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-down-animation.html">
+
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+
+
+<dom-module id="details-lab-dialog">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            #dialog {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                width: 420px;
+                position: fixed;
+                top: 0;
+                right: 0;
+                margin: 0;
+            }
+
+            #addNoteDialog {
+                bottom: 0;
+                right: 0;
+                position: fixed;
+                margin: 0;
+                width: 420px;
+            }
+
+            paper-dialog-scrollable {
+                flex: 1;
+                margin: 0;
+                --paper-dialog-scrollable: {
+                    padding: 0;
+                    margin: 0;
+                    height: calc(100vh - 64px);
+                }
+            }
+
+            .main-toolbar {
+                padding: 0 16px;
+                margin-top: 0;
+                background-color: var(--app-primary-color);
+                color: whitesmoke;
+
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .title {
+                font-size: 18px;
+                text-align: center;
+                margin: 0;
+
+                text-align: start;
+                flex: 1;
+            }
+
+            .main-toolbar paper-button {
+                font-size: 14px;
+            }
+
+            single-lab-order {
+                --single-lab-order-details-container: {
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+                };
+            }
+
+            .add-note-container {
+                padding: 0;
+                margin: 0;
+            }
+
+            .add-note-header {
+                font-size: 24px;
+                padding: 24px 24px 0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .empty-notes {
+                height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            paper-textarea {
+                --paper-input-container-underline: {
+                    display: none;
+                }
+
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+
+                --paper-input-container: {
+                    border: 1px solid rgba(0, 0, 0, 0.30);
+                    border-radius: 5px;
+                    padding: 8px;
+                    margin: 24px;
+                    height: 140px;
+                }
+            }
+
+            .vertical-buttons {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .vertical-buttons paper-button {
+                height: 50px;
+                border-top: 1px solid rgba(0, 0, 0, 0.12);
+                margin: 0;
+            }
+
+            .confirm-btn {
+                color: var(--app-primary-color);
+            }
+
+            .cancel-btn {
+                color: red;
+            }
+
+            .cancel-button {
+                color: black !important;
+            }
+
+            /* small screen */
+            @media (max-width: 560px) {
+                #dialog {
+                    width: auto;
+                    position: fixed;
+                    top: 0;
+                    right: 0;
+                    left: 0;
+                    margin: 0;
+                    bottom: 0;
+                }
+
+                #addNoteDialog {
+                    width: auto;
+                    left: 0;
+                }
+
+                .title {
+                    text-align: start;
+                }
+            }
+
+        </style>
+
+        <paper-dialog modal id=dialog opened={{opened}}>       
+            <app-toolbar class=main-toolbar>
+                <paper-icon-button icon="my-icons:arrow-back" on-click="cancelDialog"></paper-icon-button>
+                <div class=title>{{_computeTitle(order.states)}}</div>
+            </app-toolbar>
+            
+            <paper-dialog-scrollable>
+                <single-lab-order order={{order}} date={{_computeDate(order.states)}}></single-lab-order>
+                <sale-details divider armazon={{order.saleDetails.armazon}} micas={{order.saleDetails.micas}}></sale-details>
+                
+                <iron-pages selected="{{_computeOrderState(order.states)}}" attr-for-selected=name>
+                    <pending-micas-view on-finish-micas="_onFinishMicasClick" on-add-note-click="_onAddNoteClick" name=micas exam-results={{order.examResults}}></pending-micas-view>
+                    <processing-lab-order-view on-finish-lab-order="_onFinishOrderClick" on-add-note-click="_onAddNoteClick" name=processing exam-results={{order.examResults}}></processing-lab-order-view>
+                    <finished-lab-order-view on-add-note-click="_onAddNoteClick" name=finished exam-results={{order.examResults}}></finished-lab-order-view>
+                </iron-pages>
+
+                <div class=notes-container>
+                    <template is="dom-if" if={{!order.notes.length}}>
+                        <div class=empty-notes>No hay notas que mostrar.</div>
+                    </template>
+                    
+                    <template is="dom-repeat" items={{order.notes}} 
+                        as=singleNote>
+                        <single-note note={{singleNote.note}} index={{index}}></single-note>
+                    </template>
+                </div>
+            </paper-dialog-scrollable>
+        </paper-dialog>
+
+        <paper-dialog opened={{addNoteDialogOpened}} entry-animation="slide-from-bottom-animation" exit-animation="slide-down-animation" with-backdrop id=addNoteDialog>
+            <div class=add-note-container>
+                <div class="add-note-header">Agregar nota</div>
+                <paper-textarea no-label-float rows=5 label="Descripcion" value={{newNotes}}></paper-textarea>
+                
+                <div class=vertical-buttons>
+                    <paper-button class=confirm-btn on-click="_onConfirmAddNoteClick">Agregar nota</paper-button>
+                    <paper-button class=cancel-button on-click="_onCancelAddNoteClick">Cancelar</paper-button>
+                </div> 
+            </div>
+        </paper-dialog>
+
+
+        <paper-dialog id=confirmDialog>
+            <h2>Finalizar orden</h2>
+            <div>Al finalizar la orden se enviara una notificacion a la optica. ¿Seguro que deseas continuar?</div>
+            <div class=buttons>
+                <paper-button class=cancel-btn on-tap=_onCancelFinishTap>Mejor no</paper-button>
+                <paper-button class=confirm-btn on-tap=_onConfirmFinishOrderClick>Aceptar</paper-button>
+            </div>
+        </paper-dialog>
+
+        <paper-dialog id=confirmMicasDialog>
+            <h2>Terminar micas</h2>
+            <div>Al terminar las micas se enviara una notificacion al laboratorio. ¿Seguro que deseas continuar?</div>
+            <div class=buttons>
+                <paper-button class=cancel-btn on-tap=_onCancelFinishMicasTap>Mejor no</paper-button>
+                <paper-button class=submit-btn on-tap=_onConfirmFinishMicasClick>Aceptar</paper-button>
+            </div>
+        </paper-dialog>
+
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+    </template>
+
+    <script>
+        /**
+         * `details-lab-dialog` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class DetailsLabDialog extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'details-lab-dialog';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    id: {
+                        type: String,
+                        notify: true
+                    },
+                    order: {
+                        type: Object,
+                        live: true,
+                        doc: 'pendingExams/{id}'
+                    },
+                    addNoteDialogOpened: Boolean
+                };
+            }
+
+            static get observers() {
+                return [
+                    '_addNoteDialogOpenedObserver(addNoteDialogOpened)',
+                ];
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.dialog;
+                });
+            }
+
+            cancelDialog() {
+                this.opened = false;
+                this.$.confirmDialog.close();
+                this.$.confirmMicasDialog.close();
+            }
+
+            _computeDate(states) {
+                if (!states) return;
+                var state;
+                switch (true) {
+                    case (states['lab-order-ready'] > 0):
+                        state = states['lab-order-ready']
+                        break;
+                    case (states['micas-finished'] > 0):
+                        state = states['micas-finished']
+                        break;
+                    case (states['order-received'] > 0):
+                        state = states['order-received']
+                        break;
+                    default:
+                        break;
+                }
+                return moment(state).locale('es').format('MMMM D, h:mma');
+            }
+
+            _onAddNoteClick(e) {
+                this.$.addNoteDialog.open();
+            }
+
+            _onCancelAddNoteClick(e) {
+                this.closeAddNoteDialog();
+            }
+            
+            closeAddNoteDialog() {
+                this.$.addNoteDialog.close();
+            }
+
+            _addNoteDialogOpenedObserver(opened) {
+                if (!opened) this.newNotes = null;
+            }
+
+            _onConfirmAddNoteClick(e) {
+                if (!this.newNotes) {
+                    this.$.toast.text = 'La nota no puede estar vacia.';
+                    this.$.toast.open();
+                    return;
+                }
+
+                var source;
+                switch (this.order.states) {
+                    case (states['lab-order-ready'] > 0):
+                        source = 'pre-order-picked-up';
+                        break;
+                    case (states['micas-finished'] > 0):
+                        source = 'pre-lab-order-ready';
+                        break;
+                    case (states['order-received'] > 0):
+                        source = 'pre-micas-finished';
+                        break;
+                    default:
+                        source = 'undefined-lab-note'
+                        break;
+                }
+
+                let notesArray = this.order.notes ? _.cloneDeep(this.order.notes) : [];
+                notesArray.push({note: this.newNotes, source: source});
+
+                var addNoteEvent = new CustomEvent('add-note', {detail: {notes: notesArray, id: this.id}});
+                this.dispatchEvent(addNoteEvent);
+                this.closeAddNoteDialog();
+            }
+
+            _computeTitle(states) {
+                if (!states) return;
+                var orderState;
+                switch (true) {
+                    case (states['lab-order-ready'] > 0):
+                        orderState = 'Orden lista'
+                        break;
+                    case (states['micas-finished'] > 0):
+                        orderState = 'Orden en proceso'
+                        break;
+                    case (states['order-received'] > 0):
+                        orderState = 'Micas por elaborar'
+                        break;
+                    default:
+                        orderState = 'Orden de laboratorio'
+                        break;
+                }
+                return orderState;
+            }
+
+            _onConfirmFinishOrderClick(e) {
+                var db = firebase.firestore();
+                db.doc(`pendingExams/${this.id}`).update({
+                    'states.lab-order-ready': moment().valueOf(),
+                }).then(response => {
+                    console.log('lab order ready successful!');
+                    this.$.toast.text = 'La orden esta lista.';
+                    this.$.toast.open();
+                    this.cancelDialog();
+                }).catch(err => {
+                    console.log('lab order ready ERROR:', err);
+                    this.$.toast.text = 'No se a podido terminar la orden.';
+                    this.$.toast.open();
+                });
+            }
+
+            _onConfirmFinishMicasClick(e) {
+                var db = firebase.firestore();
+                db.doc(`pendingExams/${this.id}`).update({
+                    'states.micas-finished': moment().valueOf(),
+                    'labOrder.finished': true
+                }).then(response => {
+                    console.log('micas finished successfully!');
+                    this.$.toast.text = 'Las micas han sido terminadas.';
+                    this.$.toast.open();
+                    this.cancelDialog();
+                }).catch(err => {
+                    console.log('micas finished ERROR:', err);
+                    this.$.toast.text = 'No se han podido terminar las micas.';
+                    this.$.toast.open();
+                });
+            }
+
+            _onFinishMicasClick(e) {
+                this.$.confirmMicasDialog.open();
+            }
+
+            _onFinishOrderClick(e) {
+                this.$.confirmDialog.open();
+            }
+
+            _onCancelFinishTap(e) {
+                this.$.confirmDialog.close();
+            }
+
+            _onCancelFinishMicasTap(e) {
+                this.$.confirmMicasDialog.close();
+            }
+
+            _computeOrderState(states) {
+                if (!states) return;
+                console.log('computing order state:', states);
+                var orderState;
+                switch (true) {
+                    case (states['lab-order-ready'] > 0):
+                        orderState = 'finished'
+                        break;
+                    case (states['micas-finished'] > 0):
+                        orderState = 'processing'
+                        break;
+                    case (states['order-received'] > 0):
+                        orderState = 'micas'
+                        break;
+                    default:
+                        break;
+                }
+                return orderState;
+            }
+
+        }
+
+        window.customElements.define(DetailsLabDialog.is, DetailsLabDialog);
+    </script>
+</dom-module>

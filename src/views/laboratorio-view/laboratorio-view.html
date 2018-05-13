@@ -1,0 +1,145 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="single-lab-order.html">
+
+<dom-module id="laboratorio-view">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            paper-tabs {
+                background-color: var(--app-primary-color);
+                color: whitesmoke;
+                --paper-tabs-selection-bar-color: var(--accent-color-light);
+            }
+
+            .selected-tab {
+                font-weight: bold;
+            }
+            
+            .empty-view {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 20px;
+            }
+
+            single-lab-order {
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            }
+        </style>
+
+        <paper-tabs fallback-selection=processing attr-for-selected=name selected-class="selected-tab" selected="{{selected}}" fit-container>
+            <paper-tab name=micas><span id=micasTab>MICAS</span></paper-tab>
+            <paper-tab name=processing><span id=processingTab>EN PROCESO</span></paper-tab>
+            <paper-tab name=finished><span id=finishedTab>TERMINADOS</span></paper-tab>
+        </paper-tabs>
+
+        <iron-pages fallback-selection=micas attr-for-selected=name selected="{{selected}}">
+            <section name=micas>
+                <template is="dom-if" if={{!micasPendientes.length}}>
+                    <div class=empty-view>No hay micas por elaborar...</div>
+                </template>
+                <template is="dom-repeat" items={{micasPendientes}} 
+                    as=order>
+                    <single-lab-order order={{order}} date={{_computeDate(order.states.order-received)}} on-click="_onLabOrderClick"></single-lab-order>
+                </template>
+            </section>
+
+            <section name=processing>
+                <template is="dom-if" if={{!receivedOrders.length}}>
+                    <div class=empty-view>No hay ordenes en proceso...</div>
+                </template>
+                <template is="dom-repeat" items={{receivedOrders}} 
+                    as=order>
+                    <single-lab-order order={{order}} date={{_computeDate(order.states.micas-finished)}} on-click="_onLabOrderClick"></single-lab-order>
+                </template>
+            </section>
+
+            <section name=finished>
+                <template is="dom-if" if={{!finishedOrders.length}}>
+                    <div class=empty-view>No hay ordenes terminadas...</div>
+                </template>
+                <template is="dom-repeat" items={{finishedOrders}} 
+                    as=order>
+                    <single-lab-order order={{order}} date={{_computeDate(order.states.lab-order-ready)}} on-click="_onLabOrderClick"></single-lab-order>
+                </template>
+            </section>
+        </iron-pages>
+
+    </template>
+
+    <script>
+        /**
+         * `laboratorio-view` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class LaboratorioView extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'laboratorio-view';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    selected: {
+                        type: String,
+                        value: 'micas'
+                    },
+                    micasPendientes: {
+                        type: Array,
+                        live: true,
+                        collection: 'pendingExams',
+                        query: (q, el) => {
+                            q = q.orderBy('states.order-received', 'asc').where('states.order-received', '>', 0).where('states.micas-finished', '==', 0)
+                            return q;
+                        }
+                    },
+                    receivedOrders: {
+                        type: Array,
+                        live: true,
+                        collection: 'pendingExams',
+                        query: (q, el) => {
+                            q = q.orderBy('states.micas-finished', 'asc').where('states.micas-finished', '>', 0).where('states.lab-order-ready', '==', 0)
+                            return q;
+                        }
+                    },
+                    finishedOrders: {
+                        type: Array,
+                        live: true,
+                        collection: 'pendingExams',
+                        query: (q, el) => {
+                            q = q.orderBy('states.lab-order-ready', 'asc').where('states.lab-order-ready', '>', 0).where('states.order-ready', '==', 0)
+                            return q;
+                        }
+                    },
+                };
+            }
+
+            _computeDate(date) {
+                if (!date) return;
+                return moment(date).locale('es').format('MMMM D, h:mma');
+            }
+
+            _onLabOrderClick(e) {
+                this.dispatchEvent(new CustomEvent('open-dialog', {detail: {id: e.model.order['__id__'], type: 'details', subType: 'lab'}}));
+            }
+
+        }
+
+        window.customElements.define(LaboratorioView.is, LaboratorioView);
+    </script>
+</dom-module>

@@ -1,0 +1,116 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+
+<dom-module id="single-note">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            paper-button {
+                display: flex;
+                justify-content: space-between;
+                padding: 0 16px;
+                margin: 0;
+                height: 60px;
+                text-transform: lowercase;
+                text-transform: capitalize;
+                font-size: 16px;
+            }
+
+            .closed {
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            }
+
+            .opened {
+                border-bottom: none;
+            }
+            
+            iron-collapse {
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.54);
+                padding: 0 16px 16px;
+            }
+        </style>
+
+        <paper-button class$={{_computeButtonClass(opened)}} on-click="_onSingleNoteClick"><span>{{_computeNoteTitle(index)}}</span><iron-icon icon="{{_computeArrowDirection(opened)}}"></iron-icon></paper-button>
+        <iron-collapse id=collapsable opened={{opened}} no-animation>
+            <div>{{note}}</div>
+        </iron-collapse>
+
+    </template>
+
+    <script>
+        /**
+         * `single-note` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SingleNote extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'single-note';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    note: String,
+                    index: Number
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _computeNoteTitle(index) {
+                return `Nota ${index + 1}`;
+            }
+
+            _computeArrowDirection(opened) {
+                var arrowIcon = 'my-icons:';
+                return (opened ? `${arrowIcon}up` : `${arrowIcon}down`);
+            }
+
+            _onSingleNoteClick(e) {
+                console.log('on single note click:', e);
+                this.$.collapsable.toggle();
+            }
+
+            _computeButtonClass(opened) {
+                return (opened ? 'opened' : 'closed');
+            }
+
+        }
+
+        window.customElements.define(SingleNote.is, SingleNote);
+    </script>
+</dom-module>

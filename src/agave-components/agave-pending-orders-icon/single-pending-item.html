@@ -1,17 +1,12 @@
 <link rel="import" href="../../../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
 
-<dom-module id="single-exam">
+<dom-module id="single-pending-item">
     <template>
         <style>
             :host {
                 display: flex;
                 align-items: center;
-            }
-
-            iron-icon {
-                color: var(--accent-color);
-                margin: 16px;
             }
 
             .details-container {
@@ -20,58 +15,61 @@
                 align-items: flex-start;
                 justify-content: center;
                 flex: 1;
-                @apply --single-exam-details-container;
+                padding-left: 8px;
+                @apply --agave-pending-item-container;
             }
 
             .subtitle {
-                font-size: 12px;
+                font-size: 14px;
                 color: rgba(0, 0, 0, 0.54);
             }
 
             .title {
                 color: rgba(0, 0, 0, 0.87);
+                font-size: 14px;
+                white-space: nowrap; 
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
-            
+
+            iron-icon {
+                height: 20px;
+                width: 20px;
+            }
+
             img {
-                width: 40px;
-                height: 40px;
+                width: 34px;
+                height: 34px;
                 background: #555;
                 border-radius: 50%;
                 margin: 16px;
                 object-fit: cover;
             }
-
         </style>
 
-        <img id=image src={{exam.image}}></img>
+        <iron-icon icon={{_computeSelectedIcon(selected)}}></iron-icon>
         <div class=details-container>
-            <div class=title>{{exam.name}}</div>
-            <div class=subtitle>{{date}}</div>
-            <div class=subtitle>{{_computeShortId(exam.__id__)}}</div>
+            <div class=title>{{item.name}}</div>
+            <div class=subtitle>{{_computeShortId(item.__id__)}}</div>
         </div>
 
-        <template is="dom-if" if={{_computeShouldShowIcon(finished,showFinishedIcon)}}>
-            <iron-icon icon="my-icons:pending"></iron-icon>
-        </template>
-
-        
     </template>
 
     <script>
         /**
-         * `single-exam` Description
+         * `single-pending-item` Description
          *
          * @summary ShortDescription.
          * @customElement
          * @polymer
          * @extends {Polymer.Element}
          */
-        class SingleExam extends Polymer.Element {
+        class SinglePendingItem extends Polymer.Element {
             /**
              * String providing the tag name to register the element under.
              */
             static get is() {
-                return 'single-exam';
+                return 'single-pending-item';
             }
 
             /**
@@ -79,17 +77,12 @@
              */
             static get properties() {
                 return {
-                    exam: Object,
-                    date: String,
-                    finished: {
-                        type: Boolean,
-                        value: false,
-                        notify: false
-                    },
-                    showFinishedIcon: {
+                    item: Object,
+                    selected: {
                         type: Boolean,
                         value: false
-                    }
+                    },
+                    selectedItems: Array
                 };
             }
 
@@ -102,6 +95,12 @@
                 super();
             }
 
+            static get observers() {
+                return [
+                    '_selectedItemsObserver(selectedItems.*)'
+                ];
+            }
+
             /**
              * Use for one-time configuration of your component after local DOM is initialized. 
              */
@@ -109,19 +108,42 @@
                 super.ready();
 
                 Polymer.RenderStatus.afterNextRender(this, function() {
+                    
                 });
             }
 
-            _computeShouldShowIcon(finished,shouldShowIcon) {
-                return (shouldShowIcon && finished <= 0)
+            _computeSelectedIcon(selected) {
+                console.log('computing selected icon:', selected);
+                var icon = 'my-icons:';
+                if (selected) {
+                    icon += 'radio-checked';
+                } else {
+                    icon += 'radio-unchecked';
+                }
+
+                return icon;
+            }
+
+            _selectedItemsObserver(e) {
+                if (e.path === 'selectedItems.length') {
+                    let arr = e.base;
+                    let isSelected = false
+                    arr.forEach(item => {
+                        console.log('current selected item:', item)
+                        if (item['__id__'] === this.item['__id__']) isSelected = true;
+                    });
+                    this.selected = isSelected;
+                }
             }
 
             _computeShortId(id) {
-                return (id ? id.slice(-6) : '');
+                if (!id) return;
+                console.log('computing short id:', id)
+                return id.slice(-6);
             }
 
         }
 
-        window.customElements.define(SingleExam.is, SingleExam);
+        window.customElements.define(SinglePendingItem.is, SinglePendingItem);
     </script>
 </dom-module>

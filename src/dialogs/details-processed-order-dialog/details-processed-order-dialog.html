@@ -1,0 +1,501 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
+
+<link rel="import" href="../../views/examenes-view/single-exam.html">
+
+<link rel="import" href="../../agave-components/order-states/order-states.html">
+<link rel="import" href="../../agave-components/single-note/single-note.html">
+<link rel="import" href="../../agave-components/sale-details/sale-details.html">
+<link rel="import" href="../../agave-components/payment-details/payment-details.html">
+
+<link rel="import" href="../../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-from-bottom-animation.html">
+<link rel="import" href="../../../bower_components/neon-animation/animations/slide-down-animation.html">
+
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+
+<dom-module id="details-processed-order-dialog">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            #dialog {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                width: 420px;
+                position: fixed;
+                top: 0;
+                right: 0;
+                margin: 0;
+            }
+
+            paper-dialog-scrollable {
+                flex: 1;
+                margin: 0;
+                --paper-dialog-scrollable: {
+                    padding: 0;
+                    margin: 0;
+                    height: calc(100vh - 64px);
+                }
+            }
+
+            .title {
+                font-size: 18px;
+                text-align: center;
+                margin: 0;
+
+                text-align: start;
+                flex: 1;
+            }
+
+            .main-toolbar {
+                padding: 0 16px;
+                margin-top: 0;
+                background-color: var(--app-primary-color);
+                color: whitesmoke;
+
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .sub-header {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.54);
+                padding: 32px 16px 0;
+                font-weight: bold;
+            }
+
+            .main-toolbar paper-button {
+                font-size: 14px;
+            }
+
+            #addNoteDialog {
+                bottom: 0;
+                right: 0;
+                position: fixed;
+                margin: 0;
+                width: 420px;
+            }
+
+            single-lab-order {
+                --single-lab-order-details-container: {
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+                };
+            }
+
+            .vertical-buttons {
+                display: flex;
+                flex-direction: column;
+            }
+
+
+            .empty-notes {
+                height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .notes-container {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .vertical-buttons paper-button {
+                height: 50px;
+                border-top: 1px solid rgba(0, 0, 0, 0.12);
+                color: var(--app-primary-color);
+                margin: 0;
+            }
+
+            .vertical-buttons paper-button:last-child {
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            }
+
+            .cancel-btn {
+                color: red;
+            }
+
+            .confirm-btn {
+                color: var(--app-primary-color);
+            }
+
+            .add-note-container {
+                padding: 0;
+                margin: 0;
+            }
+
+            .add-note-header {
+                font-size: 24px;
+                padding: 24px 24px 0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            paper-textarea {
+                --paper-input-container-underline: {
+                    display: none;
+                }
+
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+
+                --paper-input-container: {
+                    border: 1px solid rgba(0, 0, 0, 0.30);
+                    border-radius: 5px;
+                    padding: 8px;
+                    margin: 24px;
+                    height: 140px;
+                }
+            }
+
+            .divider {
+                margin-left: 64px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            }
+
+            .confirm-inputs-container {
+                display: flex;
+            }
+
+            .confirm-inputs-container paper-input {
+                margin: 8px;
+            }
+
+            .confirm-total-input {
+                --paper-input-container-underline: {
+                    display: none;
+                }
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+            }
+
+            paper-button[disabled] {
+                color: #a8a8a8 !important;
+            }
+
+            /* small screen */
+            @media (max-width: 560px) {
+                #dialog {
+                    width: auto;
+                    position: fixed;
+                    top: 0;
+                    right: 0;
+                    left: 0;
+                    margin: 0;
+                    bottom: 0;
+                }
+
+                .title {
+                    text-align: start;
+                }
+
+                #addNoteDialog {
+                    width: auto;
+                    left: 0;
+                }
+            }
+        </style>
+
+        <paper-dialog modal id=dialog opened={{opened}}>                              
+            <app-toolbar class=main-toolbar>
+                <paper-icon-button icon="my-icons:arrow-back" on-click="cancelDialog"></paper-icon-button>
+                <div class=title>Orden en proceso</div>
+            </app-toolbar>
+            
+            <paper-dialog-scrollable>
+                <single-exam show-finished-icon finished={{order.states.lab-order-ready}} exam={{order}} date={{_computeDate(order.states.finish-exam)}}></single-exam>
+                <div class="divider"></div>
+                <div class=vertical-buttons>
+                    <sale-details divider armazon={{order.saleDetails.armazon}} micas={{order.saleDetails.micas}}></sale-details>
+                    <payment-details payments={{order.saleDetails.payments}} total={{order.saleDetails.total}}></payment-details>
+                    <div class="sub-header">Historial de estados</div>
+                    <order-states states={{order.states}}></order-states>
+                    
+                    <paper-button disabled={{_computeIsReceiveButtonDisabled(order.states.lab-order-ready)}} on-click="_onReceiveOrderClick">Recojer orden de laboratorio</paper-button>
+                    <paper-button disabled={{_computeIsButtonDisabled(order.states.order-paid)}} on-click="_onPayOrderClick">Recibir pago</paper-button>
+                    <paper-button on-click="_addNoteClick">Agregar nota</paper-button>
+                </div>
+        
+                <div class=notes-container>
+                    <template is="dom-if" if={{!order.notes.length}}>
+                        <div class=empty-notes>No hay notas que mostrar.</div>
+                    </template>
+                    
+                    <template is="dom-repeat" items={{order.notes}} 
+                        as=singleNote>
+                        <single-note note={{singleNote.note}} index={{index}}></single-note>
+                    </template>
+                </div>
+            </paper-dialog-scrollable>
+        </paper-dialog>
+            
+        <paper-dialog opened={{addNoteDialogOpened}} entry-animation="slide-from-bottom-animation" exit-animation="slide-down-animation" with-backdrop id=addNoteDialog>
+            <div class=add-note-container>
+                <div class="add-note-header">Agregar nota</div>
+                <paper-textarea no-label-float rows=5 label="Descripcion" value={{newNotes}}></paper-textarea>
+                
+                <div class=vertical-buttons>
+                    <paper-button class=submit-button on-click="_onConfirmAddNoteClick">Agregar nota</paper-button>
+                    <paper-button class=cancel-button on-click="_onCancelAddNoteClick">Cancelar</paper-button>
+                </div> 
+            </div>
+        </paper-dialog>
+        
+        <paper-dialog id=receivePaymentDialog modal>
+            <h2>Pagar orden</h2>
+            <div class=confirm-inputs-container>
+                <paper-input type=number class=confirm-total-input label=Total readonly always-float-label value={{_computeAmountDue(order.saleDetails.total,order.saleDetails.payments)}}></paper-input>
+                <paper-input type=number label=Pago always-float-label value={{currentPayment}}></paper-input>
+            </div>
+            <div class=buttons>
+                <paper-button class=cancel-btn on-tap=closeReceivePaymentDialog>Mejor no</paper-button>
+                <paper-button class=confirm-btn on-tap=_completePayment>Pagar</paper-button>
+            </div>
+        </paper-dialog>
+        
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+    </template>
+
+    <script>
+        /**
+         * `details-processed-order-dialog` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class DetailsProcessedOrderDialog extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'details-processed-order-dialog';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    id: {
+                        type: String,
+                        notify: true
+                    },
+                    order: {
+                        type: Object,
+                        live: true,
+                        doc: 'pendingExams/{id}'
+                    },
+                    newNotes: String,
+                    addNoteDialogOpened: Boolean
+                };
+            }
+
+            static get observers() {
+                return [
+                    '_addNoteDialogOpenedObserver(addNoteDialogOpened)',
+                ];
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.dialog;
+                });
+            }
+
+            _computeDate(date) {
+                if (!date) return;
+                return moment(date).locale('es').format('MMMM D, h:mma');
+            }
+
+            cancelDialog() {
+                this.opened = false;
+            }
+
+             _addNoteClick(e) {
+                this.$.addNoteDialog.open();
+            }
+
+            _onConfirmAddNoteClick(e) {
+
+                if (!this.newNotes) {
+                    this.$.toast.text = 'La nota no puede estar vacia.';
+                    this.$.toast.open();
+                    return;
+                }
+
+                let notesArray = this.order.notes ? _.cloneDeep(this.order.notes) : [];
+                notesArray.push({note: this.newNotes, source: 'pre-order-received'});
+
+                var addNoteEvent = new CustomEvent('add-note', {detail: {notes: notesArray, id: this.id}});
+                this.dispatchEvent(addNoteEvent);
+                this.closeAddNoteDialog();
+            }
+            
+            _onCancelAddNoteClick(e) {
+                this.closeAddNoteDialog();
+            }
+            
+            closeAddNoteDialog() {
+                this.$.addNoteDialog.close();
+            }
+
+            _addNoteDialogOpenedObserver(opened) {
+                if (!opened) this.newNotes = null;
+            }
+
+            _onReceiveOrderClick(e) {
+                if (this.order.states['lab-order-ready'] <= 0) {
+                    this.$.toast.text = 'La orden no esta lista para recojer.';
+                    this.$.toast.open();
+                    return;
+                }
+                
+                var db = firebase.firestore();
+                db.doc(`pendingExams/${this.id}`).update({
+                    'states.order-ready': moment().valueOf()
+                }).then(response => {
+                    console.log('receive lab item successful!');
+                    this.$.toast.text = 'La orden a sido recojida.';
+                    this.$.toast.open();
+                    this.cancelDialog();
+                }).catch(err => {
+                    console.log('receive lab item ERROR:', err);
+                    this.$.toast.text = 'No se a podido recojer la orden.';
+                    this.$.toast.open();
+                });
+            }
+
+            _onPayOrderClick(e) {
+                if (this.order.states['order-paid'] > 0) {
+                    this.$.toast.text = 'La orden ya esta completamente pagada.';
+                    this.$.toast.open();
+                    return;
+                }
+                this.$.receivePaymentDialog.open();
+            }
+
+            resetReceivePaymentDialog() {
+                this.currentPayment = null;
+            }
+
+            closeReceivePaymentDialog() {
+                this.resetReceivePaymentDialog();
+                this.$.receivePaymentDialog.close();
+            }
+
+            isPaymentValid(total, payment) {
+                return (payment <= total);
+            }
+
+            nullInputs() {
+                if (!this.currentPayment) {
+                    return true;
+                }
+                return false;
+            }
+
+            _completePayment(e) {
+                if (this.nullInputs()) {
+                    this.$.toast.text = 'Por favor ingrese el pago.';
+                    this.$.toast.open();
+                    return;
+                }
+
+                let curTotal = parseInt(this._computeAmountDue(this.order.saleDetails.total, this.order.saleDetails.payments));
+                let curPago = parseInt(this.currentPayment);
+                let isFinished = (curTotal === curPago);
+
+                if (!this.isPaymentValid(curTotal, curPago)) {
+                    this.$.toast.text = 'El pago es mayor que el total.';
+                    this.$.toast.open();
+                    return;
+                }
+
+
+                console.log('current order:', this.order);
+
+                var updatedPaymentsArr = this.order.saleDetails.payments ? _.cloneDeep(this.order.saleDetails.payments) : [];
+
+                const curPayment = {
+                    payment: curPago,
+                    timestamp: moment().valueOf()
+                }
+
+                console.log('cur payment:', curPayment)
+                updatedPaymentsArr.push(curPayment);
+
+                console.log('updated payments arr:', updatedPaymentsArr);
+
+                let detail = {
+                    payments: updatedPaymentsArr,
+                    finished: isFinished,
+                    type: 'orden',
+                    uid: this.id
+                }
+
+                var confirmPaymentEvent = new CustomEvent('receive-payment', {detail: detail});
+                this.dispatchEvent(confirmPaymentEvent);
+
+                if (isFinished) {
+                    this.$.toast.text = 'La orden a sido pagada por completo.';
+                    this.$.toast.open();
+                }
+
+                this.closeReceivePaymentDialog();
+            }
+
+            _computeAmountDue(total, payments) {
+                if (!payments) {
+                    return;
+                }
+                console.log(total, payments)
+                let paymentTotal = 0;
+                payments.forEach(payment => {
+                    paymentTotal += parseInt(payment.payment);
+                });
+                console.log('payment total:', paymentTotal)
+
+                return (parseInt(total) - paymentTotal)
+            }
+
+            _computeIsButtonDisabled(val) {
+                return val > 0;
+            }
+
+            _computeIsReceiveButtonDisabled(val) {
+                return val <= 0;
+            }
+
+        }
+
+        window.customElements.define(DetailsProcessedOrderDialog.is, DetailsProcessedOrderDialog);
+    </script>
+</dom-module>

@@ -1,0 +1,517 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+
+<link rel="import" href="../../views/examenes-view/single-exam.html">
+
+<link rel="import" href="../../agave-components/exam-results-view/exam-results-view.html">
+<link rel="import" href="../../agave-components/agave-stepper/agave-stepper.html">
+
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+
+<dom-module id="details-pending-order-dialog">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            #dialog {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                width: 420px;
+                position: fixed;
+                top: 0;
+                right: 0;
+                margin: 0;
+            }
+
+            .toolbar {
+                margin-top: 0;
+                padding: 0;
+            }
+
+            paper-dialog-scrollable {
+                flex: 1;
+                margin: 0;
+                --paper-dialog-scrollable: {
+                    padding: 0;
+                    margin: 0;
+                    height: calc(100vh - 112px);
+                }
+            }
+
+            .main-toolbar {
+                padding: 0 16px;
+                margin-top: 0;
+                background-color: var(--app-primary-color);
+                color: whitesmoke;
+
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .title {
+                font-size: 18px;
+                text-align: center;
+                margin: 0;
+
+                text-align: start;
+                flex: 1;
+            }
+
+            .main-toolbar paper-button {
+                font-size: 14px;
+            }
+
+            .sub-header {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.54);
+                padding: 32px 16px 0;
+                font-weight: bold;
+            }
+
+            .input-container {
+                padding: 0 16px 16px;
+                border-bottom: 1px solid #ccc;
+            }
+
+            single-exam {
+                --single-exam-details-container: {
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+                    flex: 1;
+                };
+            }
+
+            iron-pages {
+                margin: 0;
+                padding: 0;
+                height: calc(100vh - 112px);
+            }
+
+            paper-textarea {
+                --paper-input-container-underline: {
+                    display: none;
+                }
+                --paper-input-container-underline-focus: {
+                    display: none;
+                }
+
+                --paper-input-container: {
+                    border: 1px solid rgba(0, 0, 0, 0.12);
+                    border-radius: 5px;
+                    padding: 8px;
+                    margin: 24px;
+                    height: 100px;
+                }
+
+            }
+
+            .stepper {
+                margin: 0;
+                padding: 0;
+            }
+
+            .input-grid {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                grid-column-gap: 54px;
+                grid-row-gap: 16px;
+                padding: 16px;
+            }
+
+            .item-subheader {
+                font-size: 12px;
+                color: rgba(0, 0, 0, 0.54);
+            }
+
+            .finance-summaries {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                font-size: 16px;
+            }
+
+            .cancel-btn {
+                color: red;
+            }
+
+            .confirm-btn {
+                color: var(--app-primary-color);
+            }
+
+            /* small screen */
+            @media (max-width: 560px) {
+                #dialog {
+                    width: auto;
+                    position: fixed;
+                    top: 0;
+                    right: 0;
+                    left: 0;
+                    margin: 0;
+                    bottom: 0;
+                }
+
+                .title {
+                    text-align: start;
+                }
+            }
+        </style>
+
+        <paper-dialog modal id=dialog opened={{opened}}>
+                                    
+            <app-toolbar class=main-toolbar>
+                <paper-icon-button icon="my-icons:arrow-back" on-click="cancelDialog"></paper-icon-button>
+                <div class=title>Venta pendiente</div>
+                <paper-button on-click="_onResetTap">Reiniciar</paper-button>
+            </app-toolbar>
+
+            <iron-pages selected="{{selected}}">
+                <section>
+                    <paper-dialog-scrollable>    
+                        <single-exam exam={{order}} date={{_computeDate(order.states.finish-exam)}}></single-exam>
+                        <div class=sub-header>Resultados del examen</div>
+                        <exam-results-view exam-results={{order.examResults}}></exam-results-view>
+                        <div class="info-container">
+                            <div class=sub-header>Armazon</div>
+                            <div class=input-container>
+                                <paper-input value={{marca}} label="Marca"></paper-input>
+                                <paper-input value={{modelo}} label="Modelo"></paper-input>
+                            </div>
+
+                            <div class=sub-header>Micas</div>
+                            <div class=input-container>
+                                <paper-input value={{tratamiento}} label="Tratamiento"></paper-input>
+                                <paper-input value={{material}} label="Material"></paper-input>
+                            </div>
+                        </div>
+                    </paper-dialog-scrollable>        
+                </section>
+                <section>
+                    <paper-dialog-scrollable>    
+                        <single-exam exam={{order}} date={{_computeDate(order.states.finish-exam)}}></single-exam>
+                        <div class="info-container">
+                            <div class=sub-header>Resumen de la compra</div>
+                            
+                            <div class=input-grid>
+                                <div>
+                                    <div class=item-subheader>Armazon</div>
+                                    <div>{{marca}} {{modelo}}</div>
+                                </div>
+                                <paper-input value={{precioArmazon}} type=number no-label-float><div slot=prefix>$</div></paper-input>
+                                <div>
+                                    <div class=item-subheader>Tratamiento</div>
+                                    <div>{{tratamiento}}</div>
+                                </div>
+                                <paper-input value={{precioTratamiento}} type=number no-label-float><div slot=prefix>$</div></paper-input>
+                                <div>
+                                    <div class=item-subheader>Material</div>
+                                    <div>{{material}}</div>
+                                </div>
+                                <paper-input value={{precioMaterial}} no-label-float type=number><div slot=prefix>$</div></paper-input>
+                                <div class=finance-summaries>TOTAL</div>
+                                <paper-input readonly value={{total}} no-label-float><div slot=prefix>$</div></paper-input>
+                                <div class=finance-summaries>Anticipo</div>
+                                <paper-input value={{anticipo}} no-label-float type=number><div slot=prefix>$</div></paper-input>
+                                <div class=finance-summaries>Restante</div>
+                                <paper-input value={{restante}} readonly no-label-float><div slot=prefix>$</div></paper-input>
+                            </div>
+
+
+                            <paper-textarea no-label-float rows=5 label="Notas" value={{notes}}></paper-textarea>
+
+                        </div>
+                    </paper-dialog-scrollable>        
+                </section>
+            </iron-pages> 
+            
+            <agave-stepper class=stepper selected={{selected}} on-finish-order-click="_onFinishOrderClick"></agave-stepper>
+        </paper-dialog>
+
+
+        <paper-dialog id=confirmDialog>
+            <h2>Finalizar venta</h2>
+            <div>La venta no sera enviada al laboratorio hasta que se pague por completo. ¿Seguro que deseas continuar?</div>
+            <div class=buttons>
+                <paper-button class=cancel-btn on-tap=_onCancelFinishTap>Mejor no</paper-button>
+                <paper-button class=confirm-btn on-tap=_onConfirmFinishTap>Aceptar</paper-button>
+            </div>
+        </paper-dialog>
+
+
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+    </template>
+
+    <script>
+        /**
+         * `details-pending-order-dialog` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class DetailsPendingOrderDialog extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'details-pending-order-dialog';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    waiting: {
+                        type: Boolean,
+                        value: false
+                    },
+                    id: {
+                        type: String,
+                        notify: true
+                    },
+                    order: {
+                        type: Object,
+                        live: true,
+                        doc: 'pendingExams/{id}'
+                    },
+                    precioArmazon: Number,
+                    precioTratamiento: Number,
+                    precioMaterial: Number,
+                    notes: String,
+                    total: {
+                        type: Number,
+                        value: 0,
+                        computed: '_computeTotal(precioArmazon,precioTratamiento,precioMaterial)'
+                    },
+                    anticipo: {
+                        type: Number,
+                        value: 0
+                    },
+                    restante: {
+                        type: Number,
+                        computed: '_computeRestante(anticipo,total)'
+
+                    }
+                };
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.dialog;
+                });
+            }
+
+            cancelDialog() {
+                this.resetData();
+                this.opened = false;
+                this.selected = 0;
+                this.$.confirmDialog.close();
+            }
+
+            resetData() {
+                this.resetFirstPage();
+                this.resetSecondPage();
+            }
+
+            _computeDate(date) {
+                if (!date) return;
+                return moment(date).locale('es').format('MMMM D, h:mma');
+            }
+
+            _computeTotal(precioArmazon,precioTratamiento,precioMaterial) {
+                var total = 0;
+                if (!isNaN(parseInt(precioArmazon))) {
+                    total += parseInt(precioArmazon);
+                }
+                if (!isNaN(parseInt(precioTratamiento))) {
+                    total += parseInt(precioTratamiento);
+                }
+                if (!isNaN(parseInt(precioMaterial))) {
+                    total += parseInt(precioMaterial);
+                }
+                return total;
+            }
+
+            _computeRestante(anticipo,total) {
+                var remaining = total - anticipo;
+                return isNaN(remaining) ? parseInt(total) : remaining;
+            }
+
+            _onResetTap() {
+                switch (this.selected) {
+                    case 0:
+                        this.resetFirstPage();
+                        this.resetSecondPage();
+                        break;
+                    case 1:
+                        this.resetSecondPage();
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            resetFirstPage() {
+                this.marca = null;
+                this.modelo = null;
+                this.tratamiento = null;
+                this.material = null;
+            }
+
+            resetSecondPage() {
+                this.precioArmazon = null;
+                this.precioTratamiento = null;
+                this.precioMaterial = null;
+                this.notes = null;
+                this.anticipo = 0;
+            }
+
+            _onFinishOrderClick(e) {
+                this.$.confirmDialog.open();
+            }
+
+            _onCancelFinishTap(e) {
+                this.$.confirmDialog.close();
+            }
+
+            isPaymentValid(total, payment) {
+                let curTotal = parseInt(total);
+                let curPago = parseInt(payment);
+                return (curPago <= curTotal);
+            }
+
+            _onConfirmFinishTap(e) {
+                console.log('on finish order click:', e);
+
+                if (this.nullInputs()) {
+                    this.$.confirmDialog.close();
+                    return;
+                }
+
+                let curTotal = parseInt(this.total);
+                let curPago = parseInt(this.anticipo);
+                let isFinished = (curTotal === curPago);
+
+                if (!this.isPaymentValid(curTotal, curPago)) {
+                    this.$.confirmDialog.close();
+                    this.$.toast.text = 'El pago es mayor que el total.';
+                    this.$.toast.open();
+                    return;
+                }
+
+                if (isNaN(curPago)) {
+                    curPago = 0;
+                }
+
+                //if anticipo == 0, confirm before continuing...
+                let timestamp = moment().valueOf();
+                var saleDetails = {
+                    armazon: {
+                        marca: this.marca,
+                        modelo: this.modelo,
+                        precio: this.precioArmazon
+                    },
+                    micas: {
+                        tratamiento: this.tratamiento,
+                        material: this.material,
+                        precioTratamiento: this.precioTratamiento,
+                        precioMaterial: this.precioMaterial
+                    },
+                    finished: isFinished,
+                    total: parseInt(this.total),
+                    payments: [
+                        {
+                            payment: curPago,
+                            timestamp: timestamp
+                        }
+                    ]
+                }
+
+                var notesArray = this.order.notes ? _.cloneDeep(this.order.notes) : [];
+                if(this.notes) {
+                    notesArray.push({note: this.notes, source: 'finish-sale'});
+                }
+                
+                var db = firebase.firestore();
+                db.doc(`pendingExams/${this.id}`).update({
+                    'saleDetails': saleDetails,
+                    'states.finish-sale': moment().valueOf(),
+                    'notes': notesArray
+                }).then(response => {
+                    console.log('pending order update successful!');
+                    this.$.toast.text = 'La venta pendiente a sido terminada.';
+                    this.$.toast.open();
+                    this.cancelDialog();
+                }).catch(err => {
+                    console.log('pending order update ERROR:', err);
+                    this.$.toast.text = 'No se a podido terminar la venta pendiente.';
+                    this.$.toast.open();
+                });
+
+            }
+
+            nullInputs() {
+                switch (true) {
+                    case (!this.marca):
+                        this.$.toast.text = 'Por favor ingrese la marca del armazon.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.modelo):
+                        this.$.toast.text = 'Por favor ingrese el modelo del armazon.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.tratamiento):
+                        this.$.toast.text = 'Por favor ingrese el tratamiento del armazon.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.material):
+                        this.$.toast.text = 'Por favor ingrese el material del armazon.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.precioArmazon):
+                        this.$.toast.text = 'Por favor ingrese el costo del armazon.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.precioTratamiento):
+                        this.$.toast.text = 'Por favor ingrese el costo del tratamiento.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.precioMaterial):
+                        this.$.toast.text = 'Por favor ingrese el costo del material.';
+                        this.$.toast.open();
+                        return true;
+                    default:
+                        break;
+                }
+
+                return false;
+            }
+
+        }
+
+        window.customElements.define(DetailsPendingOrderDialog.is, DetailsPendingOrderDialog);
+    </script>
+</dom-module>

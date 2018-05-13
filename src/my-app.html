@@ -9,6 +9,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<!-- firebase imports -->
+<link rel="import" href="../bower_components/polymerfire/firebase-app.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-auth.html">
+
 <link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
 <link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
 <link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
@@ -22,9 +27,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="my-icons.html">
 
-<!-- firebase imports -->
-<link rel="import" href="../bower_components/polymerfire/firebase-app.html">
-<link rel="import" href="../bower_components/polymerfire/firebase-auth.html">
 
 <!-- agave imports -->
 <link rel="import" href="agave-components/agave-drawer-toolbar/agave-drawer-toolbar.html">
@@ -35,6 +37,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="lazy-import" href="views/pacientes-view/pacientes-view.html">
 <link rel="lazy-import" href="views/examenes-view/examenes-view.html">
 <link rel="lazy-import" href="views/ventas-view/ventas-view.html">
+<link rel="lazy-import" href="views/laboratorio-view/laboratorio-view.html">
 <link rel="lazy-import" href="views/error-view/error-view.html">
 
 <link rel="import" href="dialogs/sign-in-dialog/sign-in-dialog.html">
@@ -43,11 +46,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="lazy-import" href="dialogs/details-user-dialog/details-user-dialog.html">
 <link rel="lazy-import" href="dialogs/details-patient-dialog/details-patient-dialog.html">
 <link rel="lazy-import" href="dialogs/details-exam-dialog/details-exam-dialog.html">
+<link rel="lazy-import" href="dialogs/details-lab-dialog/details-lab-dialog.html">
+<link rel="lazy-import" href="dialogs/details-pending-order-dialog/details-pending-order-dialog.html">
+<link rel="lazy-import" href="dialogs/details-finished-order-dialog/details-finished-order-dialog.html">
+<link rel="lazy-import" href="dialogs/details-processed-order-dialog/details-processed-order-dialog.html">
 <link rel="lazy-import" href="dialogs/create-user-dialog/create-user-dialog.html">
 <link rel="lazy-import" href="dialogs/create-patient-dialog/create-patient-dialog.html">
 
+<!-- agave components -->
+<link rel="lazy-import" href="agave-components/agave-pending-orders-icon/agave-pending-orders-icon.html">
+
 <!-- moment import -->
 <script src="../bower_components/moment/min/moment-with-locales.min.js"></script>
+<script src="../bower_components/lodash/lodash.min.js"></script>
 
 
 
@@ -152,7 +163,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <a name="examenes" class=drawer-item href="[[rootPath]]examenes"><iron-icon class=drawer-icon icon="my-icons:vision"></iron-icon>Examenes pendientes</a>
           <a name="ventas" class=drawer-item href="[[rootPath]]ventas"><iron-icon class=drawer-icon icon="my-icons:cart"></iron-icon>Ventas</a>
           <a name="laboratorio" class=drawer-item href="[[rootPath]]laboratorio"><iron-icon class=drawer-icon icon="my-icons:lab"></iron-icon>Laboratorio</a>
-          <a name="micas" class=drawer-item href="[[rootPath]]micas"><iron-icon class=drawer-icon icon="my-icons:lens"></iron-icon>Micas por elaborar</a>
+          <!-- <a name="micas" class=drawer-item href="[[rootPath]]micas"><iron-icon class=drawer-icon icon="my-icons:lens"></iron-icon>Micas por elaborar</a> -->
         </iron-selector>
       </app-drawer>
 
@@ -163,6 +174,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <app-toolbar>
             <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
             <div main-title>{{page}}</div>
+            <agave-pending-orders-icon page={{page}} on-receive-items="_onReceiveItems"></agave-pending-orders-icon>
           </app-toolbar>
         </app-header>
 
@@ -175,6 +187,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <pacientes-view name=pacientes on-open-dialog="_openDialogClick"></pacientes-view>
               <examenes-view name=examenes on-open-dialog="_openDialogClick"></examenes-view>
               <ventas-view name=ventas on-open-ventas-dialog="_openVentasDialogClick"></ventas-view>
+              <laboratorio-view name=laboratorio on-open-dialog="_openDialogClick"></laboratorio-view>
               <error-view name=error></error-view>
         </iron-pages>
       </app-header-layout>
@@ -185,8 +198,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <!-- dialogs -->
     <sign-in-dialog id=signInDialog on-sign-in="_onSignInEvent" opened={{!signedIn}}></sign-in-dialog>
     <details-user-dialog id="userDetailsDialog"></details-user-dialog>
-    <details-patient-dialog id="patientDetailsDialog"></details-patient-dialog>
+    <details-patient-dialog on-receive-payment="_onReceivePaymentEvent" id="patientDetailsDialog"></details-patient-dialog>
     <details-exam-dialog id="examDetailsDialog"></details-exam-dialog>
+    <details-lab-dialog on-add-note="_onAddNote" id="labDetailsDialog"></details-lab-dialog>
+    <details-pending-order-dialog id="pendingOrderDialog"></details-pending-order-dialog>
+    <details-finished-order-dialog on-add-note="_onAddNote" id="finishedOrderDialog" ></details-finished-order-dialog>
+    <details-processed-order-dialog on-receive-payment="_onReceivePaymentEvent" id="processedOrderDialog" on-add-note="_onAddNote"></details-processed-order-dialog>
     <create-user-dialog id="userCreateDialog"></create-user-dialog>
     <create-patient-dialog id="patientCreateDialog"></create-patient-dialog>
 
@@ -224,13 +241,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ];
       }
 
-      // ready() {
-      //   super.ready();
+      /**
+       * Use for one-time configuration of your component after local DOM is initialized. 
+       */
+      ready() {
+        super.ready();
 
-      //   const firestore = firebase.firestore();
-      //   const settings = {/* your settings... */ timestampsInSnapshots: true};
-      //   firestore.settings(settings);  
-      // }
+        Polymer.RenderStatus.afterNextRender(this, function() {
+          this.loadAgavePendingOrdersIcon();    
+        });
+      }
 
       _routePageChanged(page) {
         // If no page was found in the route data, page will be an empty string.
@@ -250,6 +270,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             resolvedPageUrl,
             null,
             this._showPage404.bind(this),
+            true);
+      }
+
+      loadAgavePendingOrdersIcon() {
+        // Load page import on demand. Show 404 page if fails
+        const resolvedPageUrl = this.resolveUrl('agave-components/agave-pending-orders-icon/agave-pending-orders-icon.html');
+        Polymer.importHref(
+            resolvedPageUrl,
+            null,
+            null,
             true);
       }
 
@@ -278,6 +308,49 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.auth.signOut();
       }
 
+      _onAddNote(e) {
+        console.log('on add note event received:', e.detail);
+        var db = firebase.firestore();
+        db.doc(`pendingExams/${e.detail.id}`).update({
+          'notes': e.detail.notes
+        }).then(response => {
+          console.log('add note successful!');
+        }).catch(err => {
+          console.log('add note ERROR:', err);
+        });
+      }
+
+      _onReceivePaymentEvent(e) {
+        console.log('on receive payment event:', e.detail);
+
+        let updates = {
+          'saleDetails.payments': e.detail.payments,
+          'saleDetails.finished': e.detail.finished
+        }
+
+        if (e.detail.finished) {
+          updates['states.order-paid'] = moment().valueOf()
+        }
+        
+        var db = firebase.firestore();
+        if (e.detail.type === 'orden') {
+          db.doc(`pendingExams/${e.detail.uid}`).update(updates).then(response => {
+            console.log('receive payment for order successful!');
+          }).catch(err => {
+            console.log('receive payment for order ERROR:', err);
+          });
+        } else if (e.detail.type === 'servicio') {
+          db.doc(`patients/${e.detail.uid}/serviceOrders/${e.detail.id}`).update({
+            'payments': e.detail.payments,
+            'finished': e.detail.finished
+          }).then(response => {
+            console.log('receive payment for service successful!');
+          }).catch(err => {
+            console.log('receive payment for service ERROR:', err);
+          });
+        }
+      }
+
       _openDialogClick(e) {
         console.log('open dialog click:', e.detail)
         // Load dialog import on demand.
@@ -300,7 +373,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _openVentasDialogClick(e) {
         console.log('open ventas dialog click:', e.detail)
         // Load dialog import on demand.
-        var resolvedDialogUrl = this.resolveUrl(`dialogs/detail-${e.detail.type}-order-dialog/detail-${e.detail.type}-order-dialog.html`);
+        var resolvedDialogUrl = this.resolveUrl(`dialogs/details-${e.detail.type}-order-dialog/details-${e.detail.type}-order-dialog.html`);
             Polymer.importHref(
               resolvedDialogUrl,
               this._openVentasDialog(e.detail.id, e.detail.type),
@@ -312,6 +385,52 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$[`${type}OrderDialog`].id = id;
         this.$[`${type}OrderDialog`].opened = true;  
       }
+
+      _onReceiveItems(e) {
+        console.log('on receive selected items event:', e.detail)
+        
+        var db = firebase.firestore();
+        var batch = db.batch();
+        
+        let selectedItemsArr = e.detail.selectedItems;
+
+        var updatedState;
+        switch (e.detail.page) {
+          case 'ventas':
+            updatedState = 'states.order-ready';
+            break;
+          case 'laboratorio':
+            updatedState = 'states.order-received';
+            break;
+        }
+
+        selectedItemsArr.forEach(selectedItem => {
+          var obj = {};
+          obj[updatedState] = moment().valueOf();
+          
+          if (e.detail.page === 'laboratorio') {
+            let labOrder = {
+              micas: {
+                tratamiento: selectedItem.saleDetails.micas.tratamiento,
+                material: selectedItem.saleDetails.micas.material
+              },
+              left: selectedItem.examResults.left,
+              right: selectedItem.examResults.right,
+              finished: false
+            }
+            obj['labOrder'] = labOrder;
+          }
+
+          batch.update(db.collection('pendingExams').doc(selectedItem['__id__']), obj);
+        });
+        console.log('current batch:', batch);
+
+        batch.commit().then(response => {
+          console.log('selected items batch commit successful:', response)
+        }).catch(err => {
+          console.log('selected items batch commit ERROR:', err)
+        });
+      } 
 
     }
 

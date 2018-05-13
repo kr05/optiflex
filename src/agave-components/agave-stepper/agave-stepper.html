@@ -1,0 +1,177 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+
+
+<dom-module id="agave-stepper">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                height: 48px;
+                background-color: var(--app-primary-color);
+            }
+            
+            .circle {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                margin: 4px;
+            }
+
+            .default {
+                background-color: #fafafa;
+                opacity: 0.2;
+            }         
+
+            .selected {
+                background-color: #ffffff;
+            }
+
+            .dot-container {
+                display: flex;
+            }
+    
+            paper-button {
+                color: #fafafa;
+                --paper-button-flat-keyboard-focus: {
+                    font-weight: none;
+                };
+            }
+        </style>
+
+        
+        <paper-button on-click="_onPreviousClick"><iron-icon icon="my-icons:chevron-left"></iron-icon>Atras</paper-button>
+
+        <div class=dot-container>
+            <template is="dom-repeat" items={{_computeDotsArray(steps)}} 
+                as=step index-as=index>
+                <div class$={{_computeDotColor(selected,index)}}></div>
+            </template>
+        </div>
+        
+        <template is="dom-if" if={{!lastStep}}>
+            <paper-button on-click="_onNextClick">Siguiente<iron-icon icon="my-icons:chevron-right"></iron-icon></paper-button>
+        </template>
+        
+        <template is="dom-if" if={{lastStep}}>
+            <paper-button on-click="_onFinishClick">Finalizar<iron-icon icon="my-icons:chevron-right"></iron-icon></paper-button>
+        </template>
+        
+        
+        
+
+    </template>
+
+    <script>
+        /**
+         * `agave-stepper` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AgaveStepper extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'agave-stepper';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    lastStep: {
+                        type: Boolean,
+                        notify: true,
+                        computed: '_computeIsLastStep(selected)'
+                    },
+                    initialStep: {
+                        type: Boolean,
+                        notify: true,
+                        computed: '_computeIsInitialStep(selected)'
+                    },
+                    selected: {
+                        type: Number,
+                        value: 0,
+                        notify: true
+                    },
+                    steps: {
+                        type: Number,
+                        value: 2,
+                        notify: true
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _computeDotColor(selected,index) {
+                var dotClass = "circle";
+
+                if (selected === index) {
+                    dotClass += " selected";
+                } else {
+                    dotClass += " default";
+                }
+                return dotClass;
+            }
+
+            _computeDotsArray(steps) {
+                return [...Array(steps)];
+            }
+
+            _computeIsLastStep(selected) {
+                return (selected === (this.steps - 1))
+            }
+
+            _computeIsInitialStep(selected) {
+                return (selected === 0)
+            }
+
+            _onNextClick(e) {
+                if (!this.lastStep) {
+                    this.selected = this.selected + 1;
+                }
+            }
+
+            _onPreviousClick(e) {
+                if (!this.initialStep) {
+                    this.selected = this.selected - 1;
+                }
+            }
+
+            _onFinishClick(e) {
+                var finishEvent = new CustomEvent('finish-order-click');
+                this.dispatchEvent(finishEvent);
+            }
+
+        }
+
+        window.customElements.define(AgaveStepper.is, AgaveStepper);
+    </script>
+</dom-module>

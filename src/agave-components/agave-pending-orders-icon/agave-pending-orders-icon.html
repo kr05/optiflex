@@ -1,0 +1,176 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-badge/paper-badge.html">
+<link rel="import" href="single-pending-item.html">
+<link rel="import" href="../../../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../../../bower_components/polymer/lib/elements/array-selector.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+
+
+<dom-module id="agave-pending-orders-icon">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            .empty-view, .item {
+                height: 50px;
+                padding: 8px;
+            }
+
+            .empty-view {
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            paper-listbox {
+                display: flex;
+                flex-direction: column;
+                padding: 0;
+            }
+
+            paper-button {
+                font-size: 16px;
+                margin: 0;
+                color: whitesmoke;
+                background-color: var(--light-accent-color);
+            }
+
+            single-pending-item {
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+                outline: none;
+            }
+
+            paper-badge {
+                top: 10px !important;
+            }
+
+            paper-menu-button {
+                padding: 0;
+            }
+            
+        </style>
+        
+        <template is=dom-if if={{!_isHidden(page)}}>
+            <paper-menu-button id=menuButton on-opened-changed="_onOpenedChangedEvent" dynamic-align no-overlap vertical-align=bottom ignore-select>
+                <paper-icon-button id=menuBtn icon="my-icons:multi" slot="dropdown-trigger"></paper-icon-button>
+                <paper-listbox slot="dropdown-content">
+                    <template id="itemsDomr" is=dom-repeat items={{items}} as=item>
+                        <single-pending-item on-click=_onItemClick selected-items={{selectedItems}} class=item item={{item}}></single-pending-item>
+                    </template>
+
+                    <template is=dom-if if={{!items.length}}>
+                        <div class=empty-view>{{_computeEmptyViewText(page)}}</div>
+                    </template>
+
+                    <paper-button disabled={{!items.length}} on-click="_onButtonClick">RECOJER</paper-button>
+                    <array-selector id="selector" items="{{items}}" selected="{{selectedItems}}" multi toggle></array-selector>
+                </paper-listbox>
+            </paper-menu-button>
+            <template is=dom-if if={{items.length}}>
+                <paper-badge for="menuBtn" label="{{items.length}}"></paper-badge>
+            </template>
+        </template>
+
+    </template>
+
+    <script>
+        /**
+         * `agave-pending-orders-icon` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AgavePendingOrdersIcon extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'agave-pending-orders-icon';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    items: {
+                        type: Array,
+                        live: true,
+                        collection: 'pendingExams',
+                        query: (q, el) => {
+                            if (el.page === 'ventas') {
+                                q = q.orderBy('states.lab-order-ready', 'asc').where('states.lab-order-ready', '>', 0).where('states.order-ready', '==', 0) 
+                            }
+                            if (el.page === 'laboratorio') {
+                                q = q.orderBy('states.order-paid', 'asc').where('states.order-paid', '>', 0).where('states.order-received', '==', 0)
+                            }
+                            return q;
+                        },
+                        observes: ['page']
+                    },
+                    selectedItems: {
+                        type: Array,
+                        value: []
+                    },
+                    page: {
+                        type: String,
+                        notify: true
+                    }
+                };
+            }
+
+            _onItemClick(e) {
+                let item = this.shadowRoot.querySelector('#itemsDomr').itemForElement(e.target);
+                this.shadowRoot.querySelector('#selector').select(item);
+            }
+
+            _onOpenedChangedEvent(e) {
+                this.selectedItems.forEach(selectedItem => {
+                    this.shadowRoot.querySelector('#selector').select(selectedItem);
+                });
+            }
+
+            _computeEmptyViewText(page) {
+                var emptyViewText = null; 
+                
+                switch (page) {
+                    case 'laboratorio':
+                        emptyViewText = 'No hay ordenes de optica listas...'
+                        break;
+                    case 'ventas':
+                        emptyViewText = 'No hay ordenes de laboratorio terminadas...'
+                        break;
+                    default:
+                        break;
+                }
+                return emptyViewText;
+            }
+
+            _onButtonClick(e) {
+                var onButtonClickEvent = new CustomEvent('receive-items', {detail: {selectedItems: this.selectedItems, page: this.page}});
+                this.dispatchEvent(onButtonClickEvent);
+                this.shadowRoot.querySelector('#menuButton').close();
+            }
+
+            _isHidden(page) {
+                if(page === 'laboratorio' || page === 'ventas') {
+                return false;
+                } else {
+                return true;
+                }
+            }
+        }
+
+        window.customElements.define(AgavePendingOrdersIcon.is, AgavePendingOrdersIcon);
+    </script>
+</dom-module>

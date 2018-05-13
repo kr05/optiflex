@@ -1,0 +1,80 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../agave-components/exam-results-view/exam-results-view.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="finished-lab-order-view">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                flex-direction: column;
+            }
+
+            paper-button {
+                height: 50px;
+                color: var(--app-primary-color);
+                margin: 0;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            }
+
+        </style>
+
+        <paper-button on-click="_addNoteClick">Agregar nota</paper-button>
+
+    </template>
+
+    <script>
+        /**
+         * `finished-lab-order-view` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class FinishedLabOrderView extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'finished-lab-order-view';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    examResults: Object
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _addNoteClick(e) {
+                this.dispatchEvent(new CustomEvent('add-note-click'));
+            }
+
+        }
+
+        window.customElements.define(FinishedLabOrderView.is, FinishedLabOrderView);
+    </script>
+</dom-module>

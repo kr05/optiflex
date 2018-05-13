@@ -1,0 +1,76 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="order-states">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            .sub-header {
+                display: flex;
+                justify-content: space-between;
+                margin: 4px 32px;
+            }
+        </style>
+
+        <div class="sub-header">Examen terminado<div class=date>{{_formatDate(states.finish-exam)}}</div></div>
+        <div class="sub-header">Venta terminada<div class=date>{{_formatDate(states.finish-sale)}}</div></div>
+        <div class="sub-header">Orden pagada<div class=date>{{_formatDate(states.order-paid)}}</div></div>
+        <div class="sub-header">Micas elaboradas<div class=date>{{_formatDate(states.micas-finished)}}</div></div>
+        <div class="sub-header">Lentes listos<div class=date>{{_formatDate(states.lab-order-ready)}}</div></div>
+
+    </template>
+
+    <script>
+        /**
+         * `order-states` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class OrderStates extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'order-states';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    states: Object
+                };
+            }
+
+            _computeStatesArray(states) {
+
+                if (!states) return;
+
+                const statesArray = Object.keys(states).map(index => {
+                    let obj = {};
+                    obj['state'] = states[index];
+                    obj['key'] = index;
+                    return obj;
+                })
+                console.log('states array:', statesArray);
+                return statesArray;
+            }
+
+            _formatDate(date) {
+                if (date <= 0) {
+                    return 'pendiente'
+                }
+                return moment(date).locale('es').format('MMMM D, h:mma');
+            }
+
+        }
+
+        window.customElements.define(OrderStates.is, OrderStates);
+    </script>
+</dom-module>

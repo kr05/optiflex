@@ -1,0 +1,112 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../agave-components/exam-results-view/exam-results-view.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+
+
+<dom-module id="processing-lab-order-view">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                flex-direction: column;
+            }
+
+            paper-button {
+                height: 50px;
+                border-top: 1px solid rgba(0, 0, 0, 0.12);
+                color: var(--app-primary-color);
+                margin: 0;
+            }
+
+            paper-button:last-child {
+                border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+            }
+
+            .sub-header {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.54);
+                padding: 24px 16px 0px;
+                font-weight: bold;
+            }
+
+            exam-results-view {
+                margin-bottom: 24px;
+            }
+
+            .finished {
+                color: darkgreen;
+            }
+
+            .pending {
+                color: var(--accent-color);
+            }
+        </style>
+
+        <div class="sub-header">Resultados del examen</div>
+        <exam-results-view exam-results={{examResults}}></exam-results-view>
+
+        <paper-button on-click="_onFinishOrderClick">Finalizar</paper-button>
+        <paper-button on-click="_addNoteClick">Agregar nota</paper-button>
+
+    </template>
+
+    <script>
+        /**
+         * `processing-lab-order-view` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class ProcessingLabOrderView extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'processing-lab-order-view';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    finihed: Number,
+                    examResults: Object,
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _addNoteClick(e) {
+                this.dispatchEvent(new CustomEvent('add-note-click'));
+            }
+
+            _onFinishOrderClick(e) {
+                this.dispatchEvent(new CustomEvent('finish-lab-order'));
+            }
+
+        }
+
+        window.customElements.define(ProcessingLabOrderView.is, ProcessingLabOrderView);
+    </script>
+</dom-module>
