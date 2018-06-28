@@ -1,0 +1,102 @@
+<link rel="import" href="../../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="single-patient">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                padding: 8px 32px 8px 16px;
+                border-bottom: 1px solid var(--light-border);
+                align-items: center;
+            }
+
+            .details-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: space-around;
+            }
+
+            .subtitle {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.7);
+            }
+
+            .profile-picture {
+                width: 60px;
+                height: 60px;
+                background: var(--image-background-color);
+                border-radius: 3px;
+                margin-right: 16px;
+                object-fit: cover;
+            }
+
+            .label {
+                border: 1px solid var(--dark-primary-color);
+                color: var(--dark-primary-color);
+                border-radius: 3px;
+                background-color: rgba(68, 137, 255, 0.164);
+                padding: 4px 16px;
+                text-align: center;
+            }
+
+            .rc-content {
+                flex: 2;
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+            }
+
+            .rc-content .subtitle {
+                flex: 1;
+            }
+        </style>
+
+        <img src={{patient.image}} class=profile-picture></img>
+        <div class=details-container>
+            <div>{{patient.name}}</div>
+            <div class=subtitle>{{_computeShortId(patient.__id__)}}</div>
+        </div>
+        <div class=rc-content>
+            <div class="subtitle">{{patient.email}}</div>
+            <div class="label">Laboratorio</div>
+        </div>
+
+    </template>
+
+    <script>
+        /**
+         * `single-patient` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SinglePatient extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'single-patient';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    patient: Object
+                };
+            }
+
+            _computeShortId(id) {
+                return (id ? id.slice(-6) : '');
+            }
+
+        }
+
+        window.customElements.define(SinglePatient.is, SinglePatient);
+    </script>
+</dom-module>

@@ -1,0 +1,94 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
+
+<dom-module id="agave-bottom-toolbar">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            paper-tabs {
+                background-color: var(--app-primary-color);
+                color: #ffffff;
+                --paper-tabs-selection-bar-color: var(--accent-color-light);
+                height: 56px;
+            }
+
+            .tab-container {
+                text-align: center;
+            }
+
+            .selected-tab {
+                opacity: 1;
+            }
+        </style>
+
+        <paper-tabs align-bottom attr-for-selected=name selected-class="selected-tab" selected="{{selectedView}}" fit-container>
+            <paper-tab name=optica><div class=tab-container><span id=opticaTab>Optica</span><br><iron-icon icon="my-icons:store"></iron-icon></div></paper-tab>
+            <paper-tab name=catalogo><div class=tab-container><span id=catalogoTab>Catalogo</span><br><iron-icon icon="my-icons:catalog"></iron-icon></div></paper-tab>
+            <paper-tab name=reportes><div class=tab-container><span id=reportesTab>Reportes</span><br><iron-icon icon="my-icons:graph"></iron-icon></div></paper-tab>
+            <paper-tab name=configuracion><div class=tab-container><span id=configuracionTab>Configuracion</span><br><iron-icon icon="my-icons:cog"></iron-icon></div></paper-tab>
+        </paper-tabs>
+
+    </template>
+
+    <script>
+        /**
+         * `agave-bottom-toolbar` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AgaveBottomToolbar extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'agave-bottom-toolbar';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    selectedView: {
+                        type: String,
+                        notify: true,
+                        observer: '_selectedViewObserver'
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _selectedViewObserver(selectedView) {
+                console.log('selected view observer:', selectedView)
+            }
+
+        }
+
+        window.customElements.define(AgaveBottomToolbar.is, AgaveBottomToolbar);
+    </script>
+</dom-module>

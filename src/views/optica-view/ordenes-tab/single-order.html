@@ -1,0 +1,161 @@
+<link rel="import" href="../../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../../bower_components/iron-icon/iron-icon.html">
+
+<dom-module id="single-order">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                padding: 8px 32px 8px 16px;
+                border-bottom: 1px solid var(--light-border);
+                align-items: center;
+            }
+
+            .details-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: space-around;
+            }
+
+            .subtitle {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.7);
+            }
+
+            .label {
+                border: 1px solid var(--dark-primary-color);
+                color: var(--dark-primary-color);
+                border-radius: 3px;
+                background-color: rgba(68, 137, 255, 0.164);
+                padding: 4px 16px;
+                text-align: center;
+            }
+
+            .rc-content {
+                flex: 2;
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+            }
+
+            .rc-content .subtitle, .rc-content .balance {
+                flex: 1;
+            }
+            
+            img {
+                width: 60px;
+                height: 60px;
+                background: #555;
+                border-radius: 50%;
+                margin-right: 16px;
+                object-fit: cover;
+            }
+
+            .balance {
+                font-size: 14px;
+                font-weight: bold;
+            }
+
+        </style>
+
+        <img src={{order.image}} class=profile-picture></img>
+        <div class=details-container>
+            <div>{{order.name}}</div>
+            <div class=subtitle>{{_computeDate(order.states.create-exam)}}</div>
+        </div>
+        <div class=rc-content>
+            <div class=subtitle>{{_computeShortId(order.__id__)}}</div>
+            <div class=balance>{{_computeRemainingBalance(order.saleDetails.payments.length,order.saleDetails)}}</div>
+            <div class="label">Laboratorio</div>
+        </div>
+
+        
+    </template>
+
+    <script>
+        /**
+         * `single-exam` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SingleOrder extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'single-order';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    order: Object,
+                    finished: {
+                        type: Boolean,
+                        value: false,
+                        notify: false
+                    },
+                    showFinishedIcon: {
+                        type: Boolean,
+                        value: false
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                });
+            }
+
+            _computeShortId(id) {
+                return (id ? id.slice(-6) : '');
+            }
+
+            _computeDate(date) {
+                if (!date) return;
+                return moment(date).locale('es').format('MMMM D, h:mma');
+            }
+
+            _computeRemainingBalance(length, saleDetails) {
+                console.log('computing remaining balance...')
+                if (saleDetails.finished) return 'PAGADO';
+
+                let total = saleDetails.total;
+                let paymentTotal = 0;
+
+                (saleDetails.payments).forEach(singlePayment => {
+                    paymentTotal += singlePayment.payment;
+                });
+
+                console.log('total:', total)
+                console.log('payment total:', paymentTotal)
+
+                return `$${total - paymentTotal}`;
+            }
+
+        }
+
+        window.customElements.define(SingleOrder.is, SingleOrder);
+    </script>
+</dom-module>

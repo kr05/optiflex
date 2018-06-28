@@ -1,0 +1,74 @@
+<link rel="import" href="../../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="single-patient.html">
+
+<dom-module id="pacientes-tab">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            .empty-state {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 20px;
+            }
+        </style>
+
+        <template is="dom-repeat" items={{patients}} 
+        as=patient>
+            <single-patient on-click="_onPatientClick" patient={{patient}}></single-patient>
+        </template>
+
+        <template is=dom-if if={{!patients.length}}>
+            <div class=empty-state>No hay pacientes</div>
+        </template>
+
+    </template>
+
+    <script>
+        /**
+         * `pacientes-tab` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class PacientesTab extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'pacientes-tab';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+             static get properties() {
+                return {
+                    patients: {
+                        type: Array,
+                        collection: 'patients',
+                        live: true,
+                        observer: '_patientsObserver'
+                    }
+                };
+            }
+
+            _onPatientClick(e) {
+                this.dispatchEvent(new CustomEvent('open-dialog', {detail: {id: e.model.patient['__id__'], type: 'details', subType: 'patient'}}));
+            }
+
+            _patientsObserver(patients) {
+                console.log('patients observer:', patients)
+            }
+
+        }
+
+        window.customElements.define(PacientesTab.is, PacientesTab);
+    </script>
+</dom-module>

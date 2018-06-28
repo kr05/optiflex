@@ -1,0 +1,75 @@
+<link rel="import" href="../../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="single-order.html">
+
+<dom-module id="ordenes-tab">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            .empty-state {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 20px;
+            }
+        </style>
+
+        <template is="dom-repeat" items={{orders}} 
+        as=order>
+            <single-order on-click="_onOrderClick" order={{order}}></single-order>
+        </template>
+
+        <template is=dom-if if={{!orders.length}}>
+            <div class=empty-state>No hay ordenes pendientes</div>
+        </template>
+        
+
+    </template>
+
+    <script>
+        /**
+         * `ordenes-tab` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class OrdenesTab extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'ordenes-tab';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+             static get properties() {
+                return {
+                    orders: {
+                        type: Array,
+                        collection: 'pendingExams',
+                        live: true,
+                        observer: '_ordersObserver'
+                    }
+                };
+            }
+
+            _onOrderClick(e) {
+                this.dispatchEvent(new CustomEvent('open-dialog', {detail: {id: e.model.order['__id__'], type: 'details', subType: 'pending'}}));
+            }
+
+            _ordersObserver(orders) {
+                console.log('orders observer:', orders)
+            }
+
+        }
+
+        window.customElements.define(OrdenesTab.is, OrdenesTab);
+    </script>
+</dom-module>

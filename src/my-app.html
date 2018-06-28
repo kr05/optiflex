@@ -31,14 +31,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <!-- agave imports -->
 <link rel="import" href="agave-components/agave-drawer-toolbar/agave-drawer-toolbar.html">
 <link rel="import" href="agave-components/agave-fab/agave-fab.html">
+<link rel="import" href="agave-components/agave-bottom-toolbar/agave-bottom-toolbar.html">
 
 <!-- lazy import views -->
-<link rel="lazy-import" href="views/usuarios-view/usuarios-view.html">
+<link rel="lazy-import" href="views/optica-view/optica-view.html">
+<link rel="lazy-import" href="views/error-view/error-view.html">
+<!-- <link rel="lazy-import" href="views/usuarios-view/usuarios-view.html">
 <link rel="lazy-import" href="views/pacientes-view/pacientes-view.html">
 <link rel="lazy-import" href="views/examenes-view/examenes-view.html">
 <link rel="lazy-import" href="views/ventas-view/ventas-view.html">
-<link rel="lazy-import" href="views/laboratorio-view/laboratorio-view.html">
-<link rel="lazy-import" href="views/error-view/error-view.html">
+<link rel="lazy-import" href="views/laboratorio-view/laboratorio-view.html"> -->
 
 <link rel="import" href="dialogs/sign-in-dialog/sign-in-dialog.html">
 
@@ -53,7 +55,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="lazy-import" href="dialogs/create-user-dialog/create-user-dialog.html">
 <link rel="lazy-import" href="dialogs/create-patient-dialog/create-patient-dialog.html">
 
-<!-- agave components -->
+<!-- lazy agave components -->
 <link rel="lazy-import" href="agave-components/agave-pending-orders-icon/agave-pending-orders-icon.html">
 
 <!-- moment import -->
@@ -93,6 +95,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       app-drawer {
         --app-drawer-width: 304px;
+      }
+
+      iron-pages {
+        flex: 1;
       }
 
       div[main-title] {
@@ -158,23 +164,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <app-drawer id="drawer" slot="drawer" swipe-open opened={{drawerOpen}}>
         <agave-drawer-toolbar account-type={{accountType}} user={{user}} on-sign-out="signOut"></agave-drawer-toolbar>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="usuarios" class=drawer-item href="[[rootPath]]usuarios"><iron-icon class=drawer-icon icon="my-icons:users"></iron-icon>Usuarios</a>
-          <a name="pacientes" class=drawer-item href="[[rootPath]]pacientes"><iron-icon class=drawer-icon icon="my-icons:patients"></iron-icon>Pacientes</a>
+          <a name="optica" class=drawer-item href="[[rootPath]]optica"><iron-icon class=drawer-icon icon="my-icons:store"></iron-icon>Optica</a>
+          <!-- <a name="pacientes" class=drawer-item href="[[rootPath]]pacientes"><iron-icon class=drawer-icon icon="my-icons:patients"></iron-icon>Pacientes</a>
           <a name="examenes" class=drawer-item href="[[rootPath]]examenes"><iron-icon class=drawer-icon icon="my-icons:vision"></iron-icon>Examenes pendientes</a>
           <a name="ventas" class=drawer-item href="[[rootPath]]ventas"><iron-icon class=drawer-icon icon="my-icons:cart"></iron-icon>Ventas</a>
           <a name="laboratorio" class=drawer-item href="[[rootPath]]laboratorio"><iron-icon class=drawer-icon icon="my-icons:lab"></iron-icon>Laboratorio</a>
-          <!-- <a name="micas" class=drawer-item href="[[rootPath]]micas"><iron-icon class=drawer-icon icon="my-icons:lens"></iron-icon>Micas por elaborar</a> -->
+          <a name="micas" class=drawer-item href="[[rootPath]]micas"><iron-icon class=drawer-icon icon="my-icons:lens"></iron-icon>Micas por elaborar</a> -->
         </iron-selector>
       </app-drawer>
 
       <!-- Main content -->
-      <app-header-layout has-scrolling-region>
+      <app-header-layout fullbleed has-scrolling-region>
 
         <app-header slot="header" condenses reveals effects="waterfall">
           <app-toolbar>
             <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
             <div main-title>{{page}}</div>
-            <agave-pending-orders-icon page={{page}} on-receive-items="_onReceiveItems"></agave-pending-orders-icon>
+            <agave-pending-orders-icon page=[[page]] on-receive-items="_onReceiveItems"></agave-pending-orders-icon>
           </app-toolbar>
         </app-header>
 
@@ -183,13 +189,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="name"
             fallback-selection="error"
             role="main">
-              <usuarios-view on-open-dialog="_openDialogClick" name=usuarios></usuarios-view>
+              <optica-view name=optica></optica-view>
+              <!-- <usuarios-view on-open-dialog="_openDialogClick" name=usuarios></usuarios-view>
               <pacientes-view name=pacientes on-open-dialog="_openDialogClick"></pacientes-view>
               <examenes-view name=examenes on-open-dialog="_openDialogClick"></examenes-view>
               <ventas-view name=ventas on-open-ventas-dialog="_openVentasDialogClick"></ventas-view>
-              <laboratorio-view name=laboratorio on-open-dialog="_openDialogClick"></laboratorio-view>
+              <laboratorio-view name=laboratorio on-open-dialog="_openDialogClick"></laboratorio-view> -->
               <error-view name=error></error-view>
         </iron-pages>
+        <agave-bottom-toolbar selected-view={{routeData.page}}></agave-bottom-toolbar>
       </app-header-layout>
     </app-drawer-layout>
 
@@ -255,7 +263,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _routePageChanged(page) {
         // If no page was found in the route data, page will be an empty string.
         // Default to 'view1' in that case.
-        this.page = page || 'usuarios';
+        this.page = page || 'optica';
 
         // Close a non-persistent drawer when the page & route are changed.
         if (!this.$.drawer.persistent) {
@@ -264,6 +272,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _pageChanged(page) {
+        console.log('page changed:', page)
+        this.set('routeData.page', page)
         // Load page import on demand. Show 404 page if fails
         const resolvedPageUrl = this.resolveUrl(`views/${page}-view/${page}-view.html`);
         Polymer.importHref(

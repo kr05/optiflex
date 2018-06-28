@@ -1,0 +1,94 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="pacientes-tab/pacientes-tab.html">
+<link rel="import" href="ordenes-tab/ordenes-tab.html">
+
+<dom-module id="optica-view">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            paper-tabs {
+                background-color: var(--app-primary-color);
+                color: whitesmoke;
+                --paper-tabs-selection-bar-color: var(--accent-color-light);
+                height: 56px;
+            }
+
+            .selected-tab {
+                color: #ffffff;
+            }
+        </style>
+
+        <paper-tabs fallback-selection=pacientes attr-for-selected=name selected-class="selected-tab" selected="{{selectedTab}}" fit-container>
+            <paper-tab name=pacientes><span id=opticaTab>PACIENTES</span></paper-tab>
+            <paper-tab name=ordenes><span id=catalogoTab>ORDENES</span></paper-tab>
+        </paper-tabs>
+
+        
+        <iron-pages attr-for-selected=name selected="{{selectedTab}}">
+            <section name=pacientes>
+                <pacientes-tab></pacientes-tab>
+            </section>
+            <section name=ordenes>
+                <ordenes-tab></ordenes-tab>
+            </section>
+        </iron-pages>
+        
+
+    </template>
+
+    <script>
+        /**
+         * `optica-view` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class OpticaView extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'optica-view';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+        }
+
+        window.customElements.define(OpticaView.is, OpticaView);
+    </script>
+</dom-module>

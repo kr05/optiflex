@@ -14,7 +14,7 @@
       "type": "image/png"
     }
   ],
-  "start_url": "/",
+  "start_url": "https://optica-bc213.firebaseapp.com",
   "display": "standalone",
   "theme_color": "#448AFF",
   "background_color": "#448AFF"
