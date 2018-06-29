@@ -1,0 +1,250 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="single-exam/single-exam.html">
+<link rel="import" href="single-receipt/single-receipt.html">
+
+<dom-module id="patient-details">
+    <template>
+        <style>
+            :host {
+                background-color: white;
+                display: none;
+            }
+
+            :host([visible]) {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+            }
+
+            .grid-container {
+                border-bottom: 1px solid #ccc;
+                padding: 24px;
+                display: grid;
+                grid-template-columns: auto 1fr 1fr 1fr;
+                grid-template-rows: auto 1fr 1fr 1fr;
+                grid-template-areas: "image name name chip" "image fc sc chip" "image fc sc chip" "image fc sc chip";
+            }
+
+            .image {
+                grid-area: image;
+                width: 200px;
+                margin-right: 24px;
+            }
+
+            img {
+                background-color: #ccc;
+                object-fit: cover;
+                object-position: center;
+                width: 100%;
+                max-height: 100%;
+            }
+
+            .name {
+                grid-area: name;
+                font-size: 24px;
+                margin-bottom: 8px;
+            }
+
+            .fc {
+                grid-area: fc;
+            }
+            
+            .fc, .sc {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .subtitle {
+                font-size: 14px;
+                color: var(--light-primary-color);
+            }
+
+            .sc {
+                grid-area: sc;
+            }
+
+            .chip {
+                grid-area: chip;
+                display: flex;
+                align-items: flex-start;
+                margin-right: 40px;
+                justify-content: flex-end;
+            }
+
+            .chip > span {
+                border: 1px solid #ccc;
+                border-radius: 3px;
+                padding: 4px 8px;
+            }
+
+            .chip > span > iron-icon {
+                color: var(--dark-primary-color);
+                margin-right: 8px;
+            }
+
+            paper-tabs {
+                width: 75%;
+                align-self: center;
+                --paper-tabs-selection-bar-color: var(--dark-primary-color);
+            }
+
+            .selected-tab {
+                color: var(--dark-primary-color);
+            }
+
+
+        </style>
+
+        <app-route
+            route="{{route}}"
+            pattern="/details/:pid"
+            data="{{routeData}}"
+            tail="{{subroute}}">
+        </app-route>
+
+        <div class="grid-container">
+            <div class="image">
+                <img src="{{patient.image}}">
+            </div>
+            <div class="name">{{patient.name}}</div>
+            <div class="fc">
+                <div>
+                    <div class=subtitle>Fecha de nacimiento</div>
+                    <div>22 Nov 2018</div>
+                </div>
+                <div>
+                    <div class=subtitle>Telefono</div>
+                    <div>123-234-3553</div>
+                </div>
+                <div>
+                    <div class=subtitle>Correo electronico</div>
+                    <div>{{patient.email}}</div>
+                </div>
+            </div>
+            <div class="sc">
+                <div>
+                    <div class=subtitle>Direccion</div>
+                    <div>{{patient.address}}</div>
+                </div>
+            </div>
+            <div class="chip">
+                <span><iron-icon icon="my-icons:catalog"></iron-icon>XD5456</span>
+            </div>
+        </div>
+
+        
+        <paper-tabs noink fallback-selection=examenes attr-for-selected=name selected-class="selected-tab" selected="{{selectedTab}}">
+            <paper-tab name=examenes>EXAMENES</paper-tab>
+            <paper-tab name=recibos>RECIBOS</paper-tab>
+        </paper-tabs>
+
+        <iron-pages attr-for-selected=name selected="{{selectedTab}}">
+            <section name="examenes">
+                <template is="dom-repeat" items={{exams}} 
+                    as=exam>
+                    <single-exam exam={{exam}}></single-exam>     
+                </template>
+            </section>
+            <section name=recibos>
+                <template is="dom-repeat" items={{receipts}} 
+                    as=receipt>  
+                    <single-receipt receipt={{receipt}}></single-receipt>                 
+                </template>
+            </section>
+        </iron-pages>
+    </template>
+
+    <script>
+        /**
+         * `patient-details` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class PatientDetails extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'patient-details';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    pid: {
+                        type: String,
+                        notify: true,
+                        observer: '_pidObserver'
+                    },
+                    route: {
+                        type: Object,
+                        observer: '_routeObserver',
+                        notify: true
+                    },
+                    visible: {
+                        type: Boolean,
+                        value: false,
+                        notify: true,
+                        reflectToAttribute: true,
+                        observer: '_visibleObserver'
+                    },
+                    patient: {
+                        type: Object,
+                        doc: 'patients/{pid}',
+                        live: true
+                    },
+                    exams: {
+                        type: Array,
+                        collection: 'patients/{pid}/labOrders',
+                        live: true
+                    },
+                    receipts: {
+                        type: Array,
+                        collection: 'patients/{pid}/orders',
+                        live: true
+                    },
+                    routeData: Object,
+                    subroute: Object
+                };
+            }
+
+            _routeObserver(route) {
+                console.log('route:', route)
+                if(!route.path) {
+                    this.visible = false;
+                } else {
+                    let extractedPid = (route.path).replace('/details/', '');
+                    console.log('extracted pid:', extractedPid)
+                    if (!this.pid) this.pid = extractedPid;
+                    this.visible = true;
+                }
+            }
+
+            _visibleObserver(visible) {
+                console.log('visible observer:', visible);
+                if (visible) this.set('route.path', `/details/${this.pid}`)
+                if (!visible) this.set('route.path', "")
+            }
+
+            _pidObserver(pid) {
+                console.log('pid observer:', pid)
+                this.set('route.path', `/details/${pid}`)
+            }
+
+        }
+
+        window.customElements.define(PatientDetails.is, PatientDetails);
+    </script>
+</dom-module>

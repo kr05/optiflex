@@ -1,0 +1,71 @@
+<link rel="import" href="../../../../../bower_components/polymer/polymer-element.html">
+<dom-module id="single-receipt">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                align-items: center;
+                padding: 16px 0;
+                margin-left: 80px; 
+                border-bottom: 1px solid #ccc;
+            }
+            
+            :host > div {
+                flex: 1;
+            }
+
+            .subtitle {
+                font-size: 14px;
+            }
+        </style>
+
+        <div class="fc">
+            <div>{{_computeShortId(receipt.__id__)}}</div>
+            <div class=subtitle>{{_computeDate(receipt.states.order-complete)}}</div>
+        </div>
+        <div class=subtitle>Vendedor 1</div>
+        <div class=subtitle>$1000</div>
+
+    </template>
+
+    <script>
+        /**
+         * `single-receipt` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SingleReceipt extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'single-receipt';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    receipt: Object
+                };
+            }
+
+            _computeShortId(id) {
+                return (id ? id.slice(-6) : '');
+            }
+
+            _computeDate(date) {
+                console.log('computing date:', date)
+                if (!date) return;
+                return moment(date).locale('es').format('MMMM D, h:mma');
+            }
+
+        }
+
+        window.customElements.define(SingleReceipt.is, SingleReceipt);
+    </script>
+</dom-module>

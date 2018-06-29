@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+
 <!-- firebase imports -->
 <link rel="import" href="../bower_components/polymerfire/firebase-app.html">
 <link rel="import" href="../bower_components/polymerfire/firebase-firestore-mixin.html">
@@ -16,10 +17,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
 <link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
-<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
 <link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
 <link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
-<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../bower_components/app-route/app-location.html">
 <link rel="import" href="../bower_components/app-route/app-route.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
@@ -27,42 +26,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="my-icons.html">
 
-
 <!-- agave imports -->
 <link rel="import" href="agave-components/agave-drawer-toolbar/agave-drawer-toolbar.html">
 <link rel="import" href="agave-components/agave-fab/agave-fab.html">
 <link rel="import" href="agave-components/agave-bottom-toolbar/agave-bottom-toolbar.html">
+<link rel="import" href="agave-components/agave-toolbar/agave-toolbar.html">
+<link rel="import" href="dialogs/sign-in-dialog/sign-in-dialog.html">
+<link rel="lazy-import" href="agave-components/agave-pending-orders-icon/agave-pending-orders-icon.html">
 
 <!-- lazy import views -->
 <link rel="lazy-import" href="views/optica-view/optica-view.html">
 <link rel="lazy-import" href="views/error-view/error-view.html">
-<!-- <link rel="lazy-import" href="views/usuarios-view/usuarios-view.html">
-<link rel="lazy-import" href="views/pacientes-view/pacientes-view.html">
-<link rel="lazy-import" href="views/examenes-view/examenes-view.html">
-<link rel="lazy-import" href="views/ventas-view/ventas-view.html">
-<link rel="lazy-import" href="views/laboratorio-view/laboratorio-view.html"> -->
 
-<link rel="import" href="dialogs/sign-in-dialog/sign-in-dialog.html">
-
-<!-- lazy import dialogs -->
-<link rel="lazy-import" href="dialogs/details-user-dialog/details-user-dialog.html">
-<link rel="lazy-import" href="dialogs/details-patient-dialog/details-patient-dialog.html">
-<link rel="lazy-import" href="dialogs/details-exam-dialog/details-exam-dialog.html">
-<link rel="lazy-import" href="dialogs/details-lab-dialog/details-lab-dialog.html">
-<link rel="lazy-import" href="dialogs/details-pending-order-dialog/details-pending-order-dialog.html">
-<link rel="lazy-import" href="dialogs/details-finished-order-dialog/details-finished-order-dialog.html">
-<link rel="lazy-import" href="dialogs/details-processed-order-dialog/details-processed-order-dialog.html">
-<link rel="lazy-import" href="dialogs/create-user-dialog/create-user-dialog.html">
-<link rel="lazy-import" href="dialogs/create-patient-dialog/create-patient-dialog.html">
-
-<!-- lazy agave components -->
-<link rel="lazy-import" href="agave-components/agave-pending-orders-icon/agave-pending-orders-icon.html">
+<!-- lazy import updated dialogs -->
+<link rel="lazy-import" href="patient-details/patient-details.html">
 
 <!-- moment import -->
 <script src="../bower_components/moment/min/moment-with-locales.min.js"></script>
 <script src="../bower_components/lodash/lodash.min.js"></script>
-
-
 
 <dom-module id="my-app">
   <template>
@@ -84,25 +65,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: none;
       }
 
-      app-header {
-        color: #fff;
-        background-color: var(--app-primary-color);
-      }
-
-      app-header paper-icon-button {
-        --paper-icon-button-ink-color: white;
-      }
-
       app-drawer {
         --app-drawer-width: 304px;
       }
 
       iron-pages {
         flex: 1;
-      }
-
-      div[main-title] {
-        text-transform: capitalize;
       }
 
       .drawer-list {
@@ -165,38 +133,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <agave-drawer-toolbar account-type={{accountType}} user={{user}} on-sign-out="signOut"></agave-drawer-toolbar>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
           <a name="optica" class=drawer-item href="[[rootPath]]optica"><iron-icon class=drawer-icon icon="my-icons:store"></iron-icon>Optica</a>
-          <!-- <a name="pacientes" class=drawer-item href="[[rootPath]]pacientes"><iron-icon class=drawer-icon icon="my-icons:patients"></iron-icon>Pacientes</a>
-          <a name="examenes" class=drawer-item href="[[rootPath]]examenes"><iron-icon class=drawer-icon icon="my-icons:vision"></iron-icon>Examenes pendientes</a>
-          <a name="ventas" class=drawer-item href="[[rootPath]]ventas"><iron-icon class=drawer-icon icon="my-icons:cart"></iron-icon>Ventas</a>
-          <a name="laboratorio" class=drawer-item href="[[rootPath]]laboratorio"><iron-icon class=drawer-icon icon="my-icons:lab"></iron-icon>Laboratorio</a>
-          <a name="micas" class=drawer-item href="[[rootPath]]micas"><iron-icon class=drawer-icon icon="my-icons:lens"></iron-icon>Micas por elaborar</a> -->
         </iron-selector>
       </app-drawer>
 
       <!-- Main content -->
       <app-header-layout fullbleed has-scrolling-region>
+        <agave-toolbar slot="header" page={{page}} on-menu-click="_onMenuClick" on-close-details="_onCloseDialog" route="{{subroute}}"></agave-toolbar>
 
-        <app-header slot="header" condenses reveals effects="waterfall">
-          <app-toolbar>
-            <paper-icon-button icon="my-icons:menu" drawer-toggle></paper-icon-button>
-            <div main-title>{{page}}</div>
-            <agave-pending-orders-icon page=[[page]] on-receive-items="_onReceiveItems"></agave-pending-orders-icon>
-          </app-toolbar>
-        </app-header>
-
-        <iron-pages
-            selected="[[page]]"
-            attr-for-selected="name"
-            fallback-selection="error"
-            role="main">
-              <optica-view name=optica></optica-view>
-              <!-- <usuarios-view on-open-dialog="_openDialogClick" name=usuarios></usuarios-view>
-              <pacientes-view name=pacientes on-open-dialog="_openDialogClick"></pacientes-view>
-              <examenes-view name=examenes on-open-dialog="_openDialogClick"></examenes-view>
-              <ventas-view name=ventas on-open-ventas-dialog="_openVentasDialogClick"></ventas-view>
-              <laboratorio-view name=laboratorio on-open-dialog="_openDialogClick"></laboratorio-view> -->
-              <error-view name=error></error-view>
-        </iron-pages>
+        <template is="dom-if" if={{!patientVisible}}>
+          <iron-pages
+              selected="[[page]]"
+              attr-for-selected="name"
+              fallback-selection="error"
+              role="main">
+                <optica-view on-patient-click="_onPatientClick" name=optica></optica-view>
+                <error-view name=error></error-view>
+          </iron-pages>
+        </template>
+        
+        <patient-details visible={{patientVisible}} route={{subroute}} id=patientDetails></patient-details>
+        
         <agave-bottom-toolbar selected-view={{routeData.page}}></agave-bottom-toolbar>
       </app-header-layout>
     </app-drawer-layout>
@@ -205,16 +161,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <!-- dialogs -->
     <sign-in-dialog id=signInDialog on-sign-in="_onSignInEvent" opened={{!signedIn}}></sign-in-dialog>
-    <details-user-dialog id="userDetailsDialog"></details-user-dialog>
-    <details-patient-dialog on-receive-payment="_onReceivePaymentEvent" id="patientDetailsDialog"></details-patient-dialog>
-    <details-exam-dialog id="examDetailsDialog"></details-exam-dialog>
-    <details-lab-dialog on-add-note="_onAddNote" id="labDetailsDialog"></details-lab-dialog>
-    <details-pending-order-dialog id="pendingOrderDialog"></details-pending-order-dialog>
-    <details-finished-order-dialog on-add-note="_onAddNote" id="finishedOrderDialog" ></details-finished-order-dialog>
-    <details-processed-order-dialog on-receive-payment="_onReceivePaymentEvent" id="processedOrderDialog" on-add-note="_onAddNote"></details-processed-order-dialog>
-    <create-user-dialog id="userCreateDialog"></create-user-dialog>
-    <create-patient-dialog id="patientCreateDialog"></create-patient-dialog>
-
     <!-- end dialogs -->
   </template>
 
@@ -239,13 +185,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           // Polymer.Element#rootPath
           rootPath: String,
           accountType: String,
-          user: Object
+          user: Object,
+          patientVisible: {
+            type: Boolean,
+            value: false,
+            observer: '_patientVisibleObserver'
+          }
         };
       }
 
       static get observers() {
         return [
           '_routePageChanged(routeData.page)',
+          '_subrouteChanged(subroute)',
         ];
       }
 
@@ -258,6 +210,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         Polymer.RenderStatus.afterNextRender(this, function() {
           this.loadAgavePendingOrdersIcon();    
         });
+      }
+
+      _onMenuClick(e) {
+        this.$.drawer.toggle();
+      }
+
+      _subrouteChanged(subroute) {
+        console.log('subroute observer:', subroute)
+
+        if (!subroute.path) return;
+
+        let extractedPid = (subroute.path).replace('/details/', '');
+        // Load dialog import on demand.
+        var resolvedDialogUrl = this.resolveUrl('patient-details/patient-details.html');
+            Polymer.importHref(
+              resolvedDialogUrl,
+              this._openPatientDetails(extractedPid),
+              null,
+              true);
       }
 
       _routePageChanged(page) {
@@ -361,41 +332,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      _openDialogClick(e) {
-        console.log('open dialog click:', e.detail)
-        // Load dialog import on demand.
-        var resolvedDialogUrl = this.resolveUrl(`dialogs/${e.detail.type}-${e.detail.subType}-dialog/${e.detail.type}-${e.detail.subType}-dialog.html`);
-            Polymer.importHref(
-              resolvedDialogUrl,
-              this._openDialog(e.detail.id, e.detail.type, e.detail.subType),
-              null,
-              true);
-      }
-
-      _openDialog(id, type, subType) {
-        let capitalizedType = type.replace(/\b\w/g, l => l.toUpperCase());
-        if (id) {
-          this.$[`${subType}${capitalizedType}Dialog`].id = id;
-        }
-        this.$[`${subType}${capitalizedType}Dialog`].opened = true;  
-      }
-
-      _openVentasDialogClick(e) {
-        console.log('open ventas dialog click:', e.detail)
-        // Load dialog import on demand.
-        var resolvedDialogUrl = this.resolveUrl(`dialogs/details-${e.detail.type}-order-dialog/details-${e.detail.type}-order-dialog.html`);
-            Polymer.importHref(
-              resolvedDialogUrl,
-              this._openVentasDialog(e.detail.id, e.detail.type),
-              null,
-              true);
-      }
-
-      _openVentasDialog(id, type) {
-        this.$[`${type}OrderDialog`].id = id;
-        this.$[`${type}OrderDialog`].opened = true;  
-      }
-
       _onReceiveItems(e) {
         console.log('on receive selected items event:', e.detail)
         
@@ -440,8 +376,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }).catch(err => {
           console.log('selected items batch commit ERROR:', err)
         });
-      } 
+      }
 
+      _onCloseDialog(e) {
+        this.patientVisible = false;
+      }
+
+      _onPatientClick(e) {
+        // Load dialog import on demand.
+        var resolvedDialogUrl = this.resolveUrl('patient-details/patient-details.html');
+            Polymer.importHref(
+              resolvedDialogUrl,
+              this._openPatientDetails(e.detail.pid),
+              null,
+              true);
+      }
+
+      _openPatientDetails(pid) {
+        this.$.patientDetails.pid = pid;
+        this.$.patientDetails.visible = true;
+      }
+
+      _patientVisibleObserver(patientVisible) {
+        console.log('patient visible observer:', patientVisible)
+      }
     }
 
     window.customElements.define(MyApp.is, MyApp);

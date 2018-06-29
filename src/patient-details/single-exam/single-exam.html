@@ -1,0 +1,66 @@
+<link rel="import" href="../../../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="single-exam">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                align-items: center;
+                padding: 16px 0;
+                margin-left: 80px;
+                border-bottom: 1px solid #ccc;
+            }
+            
+            :host > div {
+                flex: 1;
+            }
+
+            .subtitle {
+                font-size: 14px;
+            }
+
+        </style>
+
+        <div class="fc">
+            <div>Sept 4, 2018</div>
+            <div class=subtitle>{{_computeShortId(exam.__id__)}}</div>
+        </div>
+        <div class=subtitle>Dr. Martha Peters</div>
+        <div class=subtitle>Optometria Basica</div>
+        
+    </template>
+
+    <script>
+        /**
+         * `single-exam` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SingleExam extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'single-exam';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    exam: Object
+                };
+            }
+
+            _computeShortId(id) {
+                return (id ? id.slice(-6) : '');
+            }
+        }
+
+        window.customElements.define(SingleExam.is, SingleExam);
+    </script>
+</dom-module>

@@ -60,7 +60,7 @@
             }
 
             _onPatientClick(e) {
-                this.dispatchEvent(new CustomEvent('open-dialog', {detail: {id: e.model.patient['__id__'], type: 'details', subType: 'patient'}}));
+                this.dispatchEvent(new CustomEvent('patient-click', {detail: {pid: e.model.patient['__id__']}, composed: true, bubbles: true}));
             }
 
             _patientsObserver(patients) {

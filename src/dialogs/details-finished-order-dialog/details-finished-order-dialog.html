@@ -365,7 +365,7 @@
                 console.log('on complete order click:', this.order);
                 var db = firebase.firestore();
                 db.doc(`pendingExams/${this.id}`).update({
-                    'states.order-complete': moment().toDate()
+                    'states.order-complete': moment().valueOf()
                 }).then(response => {
                 console.log('exam update successful:', response);
                     return db.doc(`pendingExams/${this.id}`).get();
