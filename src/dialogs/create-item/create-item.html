@@ -1,0 +1,387 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../agave-components/agave-image-uploader/agave-image-uploader.html">
+<link rel="import" href="../../agave-components/agave-border-input/agave-border-input.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+
+<dom-module id="create-item">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+            #fileInput {
+                display: none;
+            }
+
+            paper-dialog {
+                width: 800px;
+                border-radius: 5px;
+            }
+            
+            .header {
+                font-size: 24px;
+                text-align: center;
+            }
+
+            .dismiss-btn {
+                color: var(--dark-primary-color);
+                background-color: #ffffff;
+            }
+
+            .submit-btn {
+                background-color: var(--app-primary-color);
+                color: #fafafa;
+            }
+
+            .content {
+                display: flex;
+            }
+
+            .inputs {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                justify-content: space-between;
+            }
+
+            .image {
+                flex: 1;
+                padding-left: 24px;
+            }
+
+            .image paper-icon-button {
+                color: #fafafa;
+                position: absolute;
+                right: 32px;
+                top: 228px;
+                height: 48px;
+                width: 48px;
+
+            }
+
+            img {
+                background-color: rgb(82, 82, 82);
+                width: 100%;
+                height: 215px;
+                object-fit: contain;
+                border-radius: 5px;
+            }
+
+            .buttons {
+                margin: 16px;
+            }
+
+            .border-inputs {
+                margin-top: 40px;
+                display: flex;
+            }
+            .border-inputs .desc-input {
+                flex: 3;
+            }
+
+            agave-border-input {
+                flex: 1;
+            }
+
+            .border-inputs .qty-input {
+                padding: 0 16px;
+            }
+
+            paper-button {
+                padding: 12px 16px;
+                font-weight: 500;
+                letter-spacing: 1.25px;
+            }
+        </style>
+
+        <agave-image-uploader id=agaveFileInput image={{image}} image-file={{imageFile}}></agave-image-uploader>
+
+        <paper-dialog id=dialog modal opened={{opened}}>
+            <div class=header>{{_computeTitle(editState)}}</div>
+            <div class="content">
+                <div class="inputs">
+                    <paper-input always-float-label label="Marca" value={{make}}></paper-input>
+                    <paper-input always-float-label label="Modelo" value={{model}}></paper-input>
+                    <paper-input always-float-label label="SKU" value={{sku}}></paper-input>
+                </div>
+                <div class=image>
+                    <img src="{{image}}">
+                    <paper-icon-button icon="my-icons:camera" on-click="_onUploadImageClick"></paper-icon-button>
+                </div>
+            </div>
+            <div class="border-inputs">
+                <agave-border-input always-float label=Costo value={{cost}}></agave-border-input>
+                <agave-border-input always-float label=Precio value={{price}}></agave-border-input>
+                <agave-border-input always-float class=qty-input label=Inventario value={{quantity}}></agave-border-input>
+                <agave-border-input always-float class=desc-input label=Descripcion value={{description}}></agave-border-input>
+            </div>
+            <div class="buttons">
+                <paper-button class=dismiss-btn dialog-dismiss>Cerrar</paper-button>
+                <paper-button class=submit-btn disabled=[[waiting]] on-click="_onSubmit">{{_computeSubmitButtonText(waiting,editState)}}</paper-button>
+            </div>
+        </paper-dialog>
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+    </template>
+
+    <script>
+        /**
+         * `create-item` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class CreateItem extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'create-item';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true,
+                        observer: '_openedObserver'
+                    },
+                    defaultImage: {
+                        type: String,
+                        value: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+                    },
+                    waiting: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    editState: {
+                        type: Boolean,
+                        value: false
+                    },
+                    item: {
+                        type: Object,
+                        observer: '_itemObserver'
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    if(!this.editState) this.image = this.defaultImage;
+                    this.$.toast.fitInto = this.$.dialog; 
+                });
+            }
+
+            _itemObserver(item) {
+                if (!item) return;
+                this.make = item.make;
+                this.model = item.model;
+                this.sku = item.sku;
+                this.quantity = item.inventory;
+                this.cost = item.cost;
+                this.price = item.price;
+                this.description = item.description;
+                this.image = item.image;
+            }
+
+            _computeTitle(editState) {
+                return (editState ? 'Editar producto' : 'Crear producto');
+            }
+
+            _openedObserver(opened) {
+                console.log('opened observer:', opened)
+                if (!opened) this.resetInputs();
+            }
+
+            resetInputs() {
+                this.editState = false;
+                this.item = null;
+                this.waiting = false;
+                this.make = null;
+                this.model = null;
+                this.sku = null;
+                this.quantity = null;
+                this.cost = null;
+                this.price = null;
+                this.description = null;
+                this.image = this.defaultImage;
+                this.imageFile = null;
+            }
+
+            _onUploadImageClick(e) {
+                this.$.agaveFileInput.selectImage();
+            }
+
+            nullInputs() {
+                switch (true) {
+                    case (!this.make):
+                        this.$.toast.text = 'Por favor escriba la marca.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.model):
+                        this.$.toast.text = 'Por favor escriba el modelo.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.sku):
+                        this.$.toast.text = 'Por favor escriba el SKU.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.quantity):
+                        this.$.toast.text = 'Por favor escriba el inventario inicial.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.cost):
+                        this.$.toast.text = 'Por favor escriba el costo.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.price):
+                        this.$.toast.text = 'Por favor escriba el precio.';
+                        this.$.toast.open();
+                        return true;
+                }
+
+                return false;
+            }
+
+            _onSubmit(e) {
+                if(this.editState) {
+                    this.saveItem();
+                    return;
+                }
+                this.waiting = true;
+                console.log('submit new item details:', e)
+
+                if (this.nullInputs()) {
+                    this.waiting = false;
+                    return;
+                };
+
+                var newItem = {
+                    make: this.make,
+                    model: this.model,
+                    sku: this.sku,
+                    cost: this.cost,
+                    price: this.price,
+                    inventory: this.quantity
+                }
+                
+                //todo: change this check to server
+                if (!this.imageFile) {
+                    newItem['image'] = 'https://firebasestorage.googleapis.com/v0/b/optica-bc213.appspot.com/o/default-profile-picture.jpg?alt=media&token=b3d6b86b-8eee-47f7-9208-43586fd1eb4c';
+                }
+
+                if (this.description) newItem['description'] = this.description;
+
+                console.log('new item:', newItem)
+
+
+                var db = firebase.firestore();
+                var itemRef = db.collection('catalog').doc();
+                var pid = itemRef.id;
+
+                return itemRef.set(newItem).then(docRef => {
+                    console.log('create item successful!');
+                    if(!this.imageFile) return Promise.resolve('default');
+
+                    var storageRef = firebase.storage().ref();
+                    var itemImagesRef = storageRef.child(`itemPictures/${pid}/${this.imageFile.name}`);
+                    return itemImagesRef.put(this.imageFile);
+                }).then(response => {
+                    console.log('uploaded image successfully:', response);
+                    if(response === 'default') return Promise.resolve();
+                    return db.doc(`catalog/${pid}`).update({image: response.downloadURL});
+                }).then(response => {
+                    console.log('item image url has been updated')
+                    this.cancelDialog();
+                }).catch(err => {
+                    this.waiting = false;
+                    console.log('create item ERROR:', err);
+                });
+            } 
+
+            _computeSubmitButtonText(waiting, editState) {
+                if (!waiting) {
+                    return 'GUARDAR'
+                }
+                return (editState ? 'Editando producto...' : 'Creando producto...')
+            }
+
+            cancelDialog() {
+                this.opened = false;
+            }
+
+            saveItem() {
+                this.waiting = true;
+                console.log('submit edit item details...')
+
+                if (this.nullInputs()) {
+                    this.waiting = false;
+                    return;
+                };
+
+                var newItem = {
+                    make: this.make,
+                    model: this.model,
+                    sku: this.sku,
+                    cost: this.cost,
+                    price: this.price,
+                    inventory: this.quantity,
+                    image: this.image
+                }
+                if (this.description) newItem['description'] = this.description;
+
+                console.log('saving edits:', newItem)
+
+                var db = firebase.firestore();
+                return db.doc(`catalog/${this.item.__id__}`).update(newItem).then(response => {
+                    console.log('update item successful!');
+                    if(!this.imageFile) return Promise.resolve('default');
+
+                    var storageRef = firebase.storage().ref();
+                    var itemImagesRef = storageRef.child(`itemPictures/${this.item.__id__}/${this.imageFile.name}`);
+                    return itemImagesRef.put(this.imageFile);
+                }).then(response => {
+                    console.log('uploaded image successfully:', response);
+                    if(response === 'default') return Promise.resolve();
+                    return db.doc(`catalog/${this.item.__id__}`).update({image: response.downloadURL});
+                }).then(response => {
+                    console.log('item update successful!');
+                    this.$.toast.text = 'Sus cambios han sido guardados.';
+                    this.$.toast.open();
+                    this.waiting = false;
+                }).catch(err => {
+                    console.log('item update ERROR:', err);
+                    this.waiting = false;
+                });
+            }
+
+        }
+
+        window.customElements.define(CreateItem.is, CreateItem);
+    </script>
+</dom-module>

@@ -2,6 +2,10 @@
 <link rel="import" href="../../../bower_components/app-layout/app-header/app-header.html">
 <link rel="import" href="../../../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
 
 <dom-module id="agave-toolbar">
     <template>
@@ -19,8 +23,15 @@
                 --paper-icon-button-ink-color: white;
             }
 
-            div[main-title] {
+            div[main-title]::first-letter {
                 text-transform: capitalize;
+            }
+
+            paper-button {
+                font-size: 16px;
+                border: 2px solid white;
+                color: white;
+                background-color: var(--app-accent-color);
             }
         </style>
 
@@ -29,6 +40,24 @@
             <app-toolbar>
                 <paper-icon-button icon="{{_computeIcon(state)}}" on-click="_onIconClick"></paper-icon-button>
                 <div main-title>{{_computePage(state,page)}}</div>
+                
+                <template is="dom-if" if={{_computeIsPatientDetailsOpen(state)}}>
+                    
+                    <template is="dom-if" if={{!editState}}>
+                        <paper-icon-button icon="my-icons:edit" on-click="_onEditPatientClick"></paper-icon-button>
+                        <paper-menu-button close-on-activate dynamic-align no-overlap vertical-align="bottom">
+                            <paper-icon-button icon="my-icons:overflow-y" slot="dropdown-trigger"></paper-icon-button>
+                                <paper-listbox slot="dropdown-content">
+                                    <paper-item on-click="_onDeletePatientClick" name=delete>{{_computeDeleteString(page)}}</paper-item>
+                                </paper-listbox>
+                            </paper-menu-button>
+                    </template>
+
+                    <template is="dom-if" if={{editState}}>
+                        <paper-button on-click="_onSavePatientEdits">Guardar</paper-button>
+                    </template>
+                </template>
+                
             </app-toolbar>
         </app-header>
         
@@ -67,7 +96,8 @@
                         value: 'main',
                         notify: true,
                         computed: '_computeState(route.path)'
-                    }
+                    },
+                    editState: Boolean
                 };
             }
 
@@ -123,13 +153,26 @@
             _computePage(state, page) {
                 console.log('computing page title:', state)
                 console.log('page:', page)
-                switch (state) {
-                    case 'main':
-                        return page;
-                    case 'details':
-                        return 'Archivo paciente';
-                    default:
-                        return page;
+
+                if (state == 'main') return page;
+                if (state == 'details') {
+                    switch (page) {
+                        case 'optica':
+                            return 'Archivo paciente';
+                        case 'catalogo':
+                            return 'Detalles de producto';
+                        default:
+                            return 'Detalles';
+                    }
+                }
+            }
+
+            _computeDeleteString(page) {
+                switch (page) {
+                    case 'optica':
+                        return 'Borrar paciente'
+                    case 'catalogo':
+                        return 'Borrar producto'
                 }
             }
             
@@ -142,6 +185,24 @@
                     default:
                         return 'my-icons:menu';
                 }
+            }
+
+            _computeIsPatientDetailsOpen(state) {
+                return (state === 'details')
+            }
+
+            _onEditPatientClick(e) {
+                this.dispatchEvent(new CustomEvent('edit-patient'))
+            }
+
+            _onDeletePatientClick(e) {
+                console.log('delete patient click:', e)
+                this.dispatchEvent(new CustomEvent('delete-patient'))
+            }
+
+            _onSavePatientEdits(e) {
+                console.log('save patient click:', e)
+                this.dispatchEvent(new CustomEvent('save-patient'))
             }
 
         }

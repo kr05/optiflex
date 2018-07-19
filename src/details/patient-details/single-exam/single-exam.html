@@ -19,14 +19,18 @@
                 font-size: 14px;
             }
 
+            .doctor-name {
+                text-transform: capitalize;
+            }
+
         </style>
 
         <div class="fc">
-            <div>Sept 4, 2018</div>
+            <div>{{_computeDate(exam.createdAt)}}</div>
             <div class=subtitle>{{_computeShortId(exam.__id__)}}</div>
         </div>
-        <div class=subtitle>Dr. Martha Peters</div>
-        <div class=subtitle>Optometria Basica</div>
+        <div class="subtitle doctor-name">{{exam.executioner.name}}</div>
+        <div class=subtitle>{{_computeExamType(exam.type)}}</div>
         
     </template>
 
@@ -58,6 +62,19 @@
 
             _computeShortId(id) {
                 return (id ? id.slice(-6) : '');
+            }
+
+            _computeDate(date) {
+                console.log('computing date:', date)
+                if (!date) return;
+                return moment(date).locale('es').format('MMMM D, h:mma');
+            }
+
+            _computeExamType(type) {
+                switch (type) {
+                    case 'basic':
+                        return 'Optometria basica';
+                }
             }
         }
 

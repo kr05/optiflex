@@ -1,0 +1,115 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="single-sale-item">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                border-top: 1px solid #ccc;
+            }
+
+            .fc {
+                height: 70px;
+                width: 70px;
+                background-color: #ccc;
+                margin-right: 8px;
+            }
+
+            .sc {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .sc .product {
+                color: var(--app-primary-color);
+            }
+
+            .lc {
+                display: flex;
+                align-items: center;
+                font-size: 16px;
+            }
+
+            .lc span {
+                margin-left: 4px;
+            }
+
+            .lc .total {
+                margin-left: 16px;
+            }
+
+
+        </style>
+
+        <div class=fc></div>
+        <div class="sc">
+            <div class=product>Marca - modelo</div>
+            <div>XS</div>
+            <div>SKU: eofv09345nj3d4</div>
+        </div>
+        <div class="lc">
+            <span>$112.00</span>
+            <span>x</span>
+            <span>2</span>
+            <span class=total>$224.00</span>
+        </div>
+
+    </template>
+
+    <script>
+        /**
+         * `single-sale-item` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SingleSaleItem extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'single-sale-item';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    item: Object,
+                    noItems: {
+                        type: Boolean,
+                        value: false
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+        }
+
+        window.customElements.define(SingleSaleItem.is, SingleSaleItem);
+    </script>
+</dom-module>

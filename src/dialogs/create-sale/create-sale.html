@@ -1,0 +1,247 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../dialog-styles/dialog-styles.html">
+<link rel="import" href="single-sale-item.html">
+
+<dom-module id="create-sale">
+    <template>
+        <style include="dialog-styles">
+            :host {
+                display: block
+            }
+
+            paper-dialog {
+                width: 800px;
+                border-radius: 5px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            single-sale-item {
+                padding: 16px 24px;
+            }
+
+            paper-input {
+                border: 1px solid #767676;
+                border-radius: 5px;
+                margin: 2px;
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container: {
+                    padding: 12px 8px;
+                };
+            }
+
+            paper-textarea {
+                border: 1px solid #767676;
+                border-radius: 5px;
+                margin: 2px;
+                width: 250px;
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container: {
+                    padding: 12px 8px;
+                };
+                --paper-input-container-input:{
+                    height: 100px;
+                    max-height: 100px;
+                }
+            }
+
+            .br {
+                display: flex;
+                padding: 0 24px;
+            }
+
+            .notes-container, .payment-info {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .notes-container {
+                align-items: flex-start;
+                flex: 2;
+            }
+            
+            .notes-container > div {
+                font-size: 16px;
+                margin-left: 4px;
+                color: #767676;
+            }
+
+            .payment-info {
+                flex: 1;
+            }
+
+            .total, .payment {
+                font-size: 18px;
+                color: #000000;
+            }
+
+            .payment paper-input {
+                width: 80px;
+                margin: 0;
+                text-align: end;
+            }
+
+            .payment-info div {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: 4px 0;
+            }
+
+            .buttons {
+                margin: 16px 12px;
+            }
+
+            paper-button {
+                padding: 12px 16px;
+                font-weight: 500;
+                letter-spacing: 1.25px;
+            }
+
+        </style>
+
+        <paper-dialog id=dialog modal opened={{opened}}> 
+            <div class="header">Crear venta</div>
+
+            <template is="dom-repeat" items={{items}} 
+                as=item>
+                <single-sale-item item={{item}}></single-sale-item>
+            </template>
+            
+            <template is="dom-if" if={{!items.length}}>
+                <single-sale-item no-items></single-sale-item>
+            </template>
+
+            <div class="br">
+                <div class="notes-container">
+                    <div>Nota</div>
+                    <paper-textarea max-rows=4 no-label-float value={{note}} label="Agregar nota..."></paper-textarea>
+                </div>
+                <div class="payment-info">
+                    <div>
+                        <span>Subtotal</span>
+                        <span>$234.23</span>
+                    </div>
+                    <div>
+                        <span>Impuestos</span>
+                        <span>$0.00</span>
+                    </div>
+                    <div class=total>
+                        <span>Total</span>
+                        <span>$234.23</span>
+                    </div>
+                    <div class=payment>
+                        <span>Pago</span>
+                        <paper-input no-label-float placeholder="$0.00" value={{payment}}></paper-input>
+                    </div>                  
+                </div>
+            </div>
+                 
+            <div class="buttons">
+                <paper-button class=dismiss-btn dialog-dismiss>cancelar</paper-button>
+                <paper-button class=submit-btn disabled=[[waiting]] on-click="_onCreateExamClick">{{_computeSubmitButtonText(waiting)}}</paper-button>
+            </div>
+        </paper-dialog>
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+    </template>
+
+    <script>
+        /**
+         * `create-sale` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class CreateSale extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'create-sale';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true,
+                        observer: '_openedObserver'
+                    },
+                    waiting: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    user: Object,
+                    pid: String,
+                    items: {
+                        type: Array,
+                        value: []
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _openedObserver(opened) {
+                console.log('opened observer:', opened)
+                if (!opened) this.resetInputs();
+            }
+
+            resetInputs() {
+                this.waiting = false
+                this.user = {}
+                this.pid = null
+                this.items = []
+
+            }
+
+            _computeSubmitButtonText(waiting) {
+                return (waiting ? 'Creando examen...' : 'capturar pago')
+            }
+
+        }
+
+        window.customElements.define(CreateSale.is, CreateSale);
+    </script>
+</dom-module>

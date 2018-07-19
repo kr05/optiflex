@@ -1,0 +1,168 @@
+<link rel="import" href="../../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="../../../agave-components/single-inventory/single-inventory.html">
+
+<dom-module id="complete-inventory">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            single-inventory {
+                margin: 0;
+                padding: 8px 24px;
+            }
+
+            paper-dialog {
+                width: 600px;
+                border-radius: 5px;
+            }
+            
+            .header {
+                font-size: 24px;
+                text-align: center;
+            }
+
+            paper-button {
+                padding: 8px 24px;
+            }
+
+            .dismiss-btn {
+                color: var(--dark-primary-color);
+                background-color: #ffffff;
+            }
+
+            .submit-btn {
+                background-color: var(--app-primary-color);
+                color: #fafafa;
+            }
+
+            .buttons {
+                margin: 16px;
+            }
+
+            paper-button {
+                padding: 12px 16px;
+                font-weight: 500;
+                letter-spacing: 1.25px;
+            }
+
+            .headers {
+                display: flex;
+                margin-bottom: 24px;
+                font-weight: 500;
+                color: rgba(0, 0, 0, 0.7);
+            }
+
+            .headers div {
+                flex: 1;
+            }
+
+            .headers .main-header {
+                flex: 3;
+                margin-right: 64px;
+            }
+        </style>
+
+        <paper-dialog id=dialog opened={{opened}}>
+            <div class=header>Inventario completo</div>
+            <div class=headers>
+                <div class=main-header>Producto</div>
+                <div>Esperado</div>
+                <div>Actual</div>
+            </div>
+
+            
+            <template id=domrCatalog is="dom-repeat" items={{catalog}} 
+                as=item>
+                <single-inventory id$={{item.__id__}} item={{item}}></single-inventory>
+            </template>
+            
+            <div class="buttons">
+                <paper-button class=dismiss-btn dialog-dismiss>Cerrar</paper-button>
+                <paper-button class=submit-btn disabled=[[waiting]] on-click="_onSubmit">{{_computeSubmitButtonText(waiting)}}</paper-button>
+            </div>
+        </paper-dialog>
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+
+    </template>
+
+    <script>
+        /**
+         * `complete-inventory` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class CompleteInventory extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'complete-inventory';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    catalog: {
+                        type: Array,
+                        collection: 'catalog',
+                        live: true,
+                        notify: true
+                    },
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true,
+                        observer: '_openedObserver'
+                    },
+                    waiting: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    }
+                };
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.dialog; 
+                });
+            }
+
+            _openedObserver(opened) {
+                console.log('opened observer:', opened)
+                if (!opened) this.resetInputs();
+            }
+
+            resetInputs() {
+                console.log('resetting inputs: ', this.catalog)
+                var items = this.$.domrCatalog.items;
+                items.forEach(item => {
+                    this.shadowRoot.getElementById(item.__id__).resetInputs();
+                });
+            }
+
+            _computeSubmitButtonText(waiting) {
+                return (waiting ? 'Creando inventario rapido...' : 'GUARDAR')
+            }
+
+        }
+
+        window.customElements.define(CompleteInventory.is, CompleteInventory);
+    </script>
+</dom-module>

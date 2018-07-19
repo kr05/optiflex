@@ -1,0 +1,136 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+
+<dom-module id="agave-border-input">
+    <template>
+        <style>
+            :host {
+                display: block;
+                margin-top: -20px;
+            }
+
+            paper-input {
+                box-sizing: border-box;
+                border: 1px solid #767676;
+                border-radius: 5px;
+                margin: 2px;
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container: {
+                    padding: 16px 0 16px 16px;
+                };
+            }
+
+            .span {
+                position: relative;
+                top: 12px;
+                left: 10px;
+                padding: 0 8px;
+                font-size: 12px;
+                background-color: white;
+                visibility: hidden;
+            }
+
+            .hidden {
+                visibility: hidden;
+            }
+
+            .offset {
+                visibility: visible;
+            }
+
+            .focused {
+                color: var(--app-primary-color);
+            }
+
+            paper-input[focused] {
+                border-color: transparent;
+                box-shadow: 0 0 0 2px var(--app-primary-color);
+            }
+        </style>
+
+        <span class$={{_computeSpanClass(value,focused,alwaysFloat,noLabel)}}>{{label}}</span>
+        <paper-input focused={{focused}} no-label-float value={{value}} label="{{_computeLabel(alwaysFloat,label,noLabel)}}"></paper-input>
+
+    </template>
+
+    <script>
+        /**
+         * `agave-border-input` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AgaveBorderInput extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'agave-border-input';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    value: {
+                        type: String,
+                        notify: true
+                    },
+                    label: String,
+                    alwaysFloat: {
+                        type: Boolean,
+                        value: false
+                    },
+                    noLabel: {
+                        type: Boolean,
+                        value: false
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _computeSpanClass(value, focused, alwaysFloat, noLabel) {
+                if (noLabel) return 'hidden';
+                var spanClass = 'span'
+                if (value || alwaysFloat) spanClass += ' offset';
+                if (focused) spanClass += ' focused';
+                return spanClass;
+            }
+
+            _computeLabel(alwaysFloat, label, noLabel) {
+                if (alwaysFloat || noLabel) return '';
+                return label;
+            }
+
+        }
+
+        window.customElements.define(AgaveBorderInput.is, AgaveBorderInput);
+    </script>
+</dom-module>

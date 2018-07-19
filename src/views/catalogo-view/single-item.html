@@ -1,0 +1,130 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="single-item">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                padding: 16px 32px 16px 16px;
+                border-bottom: 1px solid var(--light-border);
+                align-items: center;
+            }
+
+            .details-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: space-around;
+            }
+
+            .subtitle {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.7);
+            }
+
+            .label {
+                border: 1px solid var(--dark-primary-color);
+                color: var(--dark-primary-color);
+                border-radius: 3px;
+                font-size: 16px;
+                background-color: rgba(68, 137, 255, 0.164);
+                padding: 4px 16px;
+                text-align: center;
+            }
+
+            .rc-content {
+                flex: 2;
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+            }
+
+            .rc-content .subtitle, .rc-content .balance {
+                flex: 1;
+            }
+            
+            img {
+                width: 48px;
+                height: 48px;
+                background: var(--image-background-color);
+                border-radius: 3px;
+                margin-right: 16px;
+                object-fit: cover;
+            }
+
+            .rc-content {
+                font-size: 14px;
+            }
+
+
+        </style>
+
+        <img src={{item.image}} class=profile-picture></img>
+        <div class=details-container>
+            <div>{{item.make}} - {{item.model}}</div>
+            <div class=subtitle>SKU: {{_computeShortId(item.__id__)}}</div>
+        </div>
+        <div class=rc-content>
+            <div>x {{item.inventory}}</div>
+            <div>${{item.price}}</div>
+            <div class="label">Pedido</div>
+        </div>
+
+    </template>
+
+    <script>
+        /**
+         * `single-item` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SingleItem extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'single-item';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    item: Object
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _computeShortId(id) {
+                return (id ? id.slice(-6) : '');
+            }
+
+        }
+
+        window.customElements.define(SingleItem.is, SingleItem);
+    </script>
+</dom-module>

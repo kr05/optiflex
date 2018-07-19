@@ -1,0 +1,379 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/datetime-picker/date-picker.html">
+<link rel="import" href="../../agave-components/agave-image-uploader/agave-image-uploader.html">
+<link rel="import" href="../../../bower_components/titanium-address-input/titanium-address-input.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+
+<dom-module id="create-patient">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            #fileInput {
+                display: none;
+            }
+
+            paper-dialog {
+                width: 800px;
+                border-radius: 5px;
+            }
+            
+            .header {
+                font-size: 24px;
+                text-align: center;
+            }
+
+            paper-button {
+                padding: 8px 24px;
+            }
+
+            .dismiss-btn {
+                color: var(--dark-primary-color);
+                background-color: #ffffff;
+            }
+
+            .submit-btn {
+                background-color: var(--app-primary-color);
+                color: #fafafa;
+            }
+
+            .content {
+                display: flex;
+            }
+
+            .inputs {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+            }
+
+            .image {
+                flex: 1;
+                padding-left: 24px;
+            }
+
+            .image paper-icon-button {
+                color: #fafafa;
+                position: absolute;
+                right: 32px;
+                bottom: 180px;
+                height: 48px;
+                width: 48px;
+
+            }
+
+            img {
+                background-color: rgb(82, 82, 82);
+                width: 100%;
+                height: 215px;
+                object-fit: contain;
+                border-radius: 5px;
+            }
+
+            .date-subtitle {
+                font-size: 12px;
+                color: #737373;
+            }
+
+            .buttons {
+                margin: 16px;
+            }
+
+            paper-button {
+                padding: 12px 16px;
+                font-weight: 500;
+                letter-spacing: 1.25px;
+            }
+        </style>
+
+        <agave-image-uploader id=agaveFileInput image={{image}} image-file={{imageFile}}></agave-image-uploader>
+
+        <paper-dialog id=dialog modal opened={{opened}}>
+            <div class=header>{{_computeTitle(editState)}}</div>
+            <div class="content">
+                <div class="inputs">
+                    <paper-input always-float-label label="Nombre" value={{name}}></paper-input>
+                    <div class="date-input">
+                        <div class=date-subtitle>Fecha de nacimiento</div>
+                        <date-picker id=datePicker hide-now-button date={{dob}}></date-picker>
+                    </div>
+                    <paper-input always-float-label label="Telefono" value={{phone}}></paper-input>
+                    <titanium-address-input api-key="AIzaSyBuKjX4OStdGIcxbAGukb2M9y08zdvZhRY" always-float-label label="Direccion" value={{address}} address={{addressObject}}></titanium-address-input>
+                    <paper-input always-float-label label="Correo electronico" value={{email}}></paper-input>
+                </div>
+                <div class=image>
+                    <img src="{{image}}">
+                    <paper-icon-button icon="my-icons:camera" on-click="_onUploadImageClick"></paper-icon-button>
+                </div>
+            </div>
+            <div class="buttons">
+                <paper-button class=dismiss-btn dialog-dismiss>Cerrar</paper-button>
+                <paper-button class=submit-btn disabled=[[waiting]] on-click="_onSubmit">{{_computeSubmitButtonText(waiting,editState)}}</paper-button>
+            </div>
+        </paper-dialog>
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+    </template>
+
+    <script>
+        /**
+         * `create-patient` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class CreatePatient extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'create-patient';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    opened: {
+                        type: Boolean,
+                        value: false,
+                        notify: true,
+                        observer: '_openedObserver'
+                    },
+                    defaultImage: {
+                        type: String,
+                        value: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+                    },
+                    waiting: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    editState: {
+                        type: Boolean,
+                        value: false
+                    },
+                    patient: {
+                        type: Object,
+                        observer: '_patientObserver'
+                    }
+                };
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+             ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    if(!this.editState) this.image = this.defaultImage;
+                    this.$.toast.fitInto = this.$.dialog; 
+                });
+            }
+
+            _patientObserver(patient) {
+                if (!patient) return;
+                this.name = patient.name;
+                this.dob = patient.dob.raw;
+                this.phone = patient.phone;
+                this.address = patient.address.raw;
+                this.addressObject = patient.address.parsed;
+                this.email = patient.email;
+                this.image = patient.image;
+            }
+
+            _computeTitle(editState) {
+                return (editState ? 'Editar paciente' : 'Crear paciente');
+            }
+
+            _openedObserver(opened) {
+                console.log('opened observer:', opened)
+                if (!opened) this.resetInputs();
+            }
+
+            resetInputs() {
+                this.editState = false;
+                this.patient = null;
+                this.waiting = false;
+                this.name = null;
+                this.$.datePicker._resetDate();
+                this.phone = null;
+                this.address = null;
+                this.email = null;
+                this.image = this.defaultImage;
+                this.imageFile = null;
+            }
+
+            _onUploadImageClick(e) {
+                this.$.agaveFileInput.selectImage();
+            }
+
+            nullInputs() {
+                switch (true) {
+                    case (!this.name):
+                        this.$.toast.text = 'Por favor escriba un nombre.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.dob):
+                        this.$.toast.text = 'Por favor ingrese una fecha de nacimiento.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.phone):
+                        this.$.toast.text = 'Por favor escriba un telefono.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.address):
+                        this.$.toast.text = 'Por favor escriba una direccion.';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.email):
+                        this.$.toast.text = 'Por favor escriba un correo electronico.';
+                        this.$.toast.open();
+                        return true;
+                }
+
+                return false;
+            }
+
+            _onSubmit(e) {
+                if(this.editState) {
+                    this.savePatient();
+                    return;
+                }
+                this.waiting = true;
+                console.log('submmit new patient details:', e)
+
+                if (this.nullInputs()) {
+                    this.waiting = false;
+                    return;
+                };
+
+                let dobMoment = moment(this.dob, 'YYYY/MM/DD');
+                let shortDob = dobMoment.format('DD/MM/YYYY');
+                let displayDob = dobMoment.locale('es').format('MMMM D, YYYY');
+
+                var newPatient = {
+                    name: this.name,
+                    dob: {
+                        short: shortDob,
+                        display: displayDob,
+                        raw: this.dob
+                    },
+                    phone: this.phone,
+                    address: {
+                        raw: this.address,
+                        parsed: this.addressObject
+                    },
+                    email: this.email
+                }
+                
+                //todo: change this check to server
+                if (!this.imageFile) {
+                    newPatient['image'] = 'https://firebasestorage.googleapis.com/v0/b/optica-bc213.appspot.com/o/default-profile-picture.jpg?alt=media&token=b3d6b86b-8eee-47f7-9208-43586fd1eb4c';
+                }
+
+                console.log('new patient:', newPatient)
+
+
+                var db = firebase.firestore();
+                var patientRef = db.collection('patients').doc();
+                var pid = patientRef.id;
+
+                patientRef.set(newPatient).then(docRef => {
+                    console.log('create patient successful!');
+                    if(!this.imageFile) return Promise.resolve('default');
+
+                    var storageRef = firebase.storage().ref();
+                    var patientImagesRef = storageRef.child(`patientProfilePictures/${pid}/${this.imageFile.name}`);
+                    return patientImagesRef.put(this.imageFile);
+                }).then(response => {
+                    console.log('uploaded image successfully:', response);
+                    if(response === 'default') return Promise.resolve();
+                    return db.doc(`patients/${pid}`).update({image: response.downloadURL});
+                }).then(response => {
+                    console.log('patient image url has been updated')
+                    this.cancelDialog();
+                }).catch(err => {
+                    this.waiting = false;
+                    console.log('create patient ERROR:', err);
+                });
+            } 
+
+            _computeSubmitButtonText(waiting, editState) {
+                if (!waiting) {
+                    return 'GUARDAR'
+                }
+                return (editState ? 'Editando paciente...' : 'Creando paciente...')
+            }
+
+            cancelDialog() {
+                this.opened = false;
+            }
+
+            savePatient() {
+                this.waiting = true;
+                console.log('submit edit patient details...')
+
+                if (this.nullInputs()) {
+                    this.waiting = false;
+                    return;
+                };
+
+                let dobMoment = moment(this.dob, 'YYYY-MM-DD');
+                let shortDob = dobMoment.format('DD/MM/YYYY');
+                let displayDob = dobMoment.locale('es').format('MMMM D, YYYY');
+
+                var newPatient = {
+                    name: this.name,
+                    dob: {
+                        short: shortDob,
+                        display: displayDob,
+                        raw: this.dob
+                    },
+                    phone: this.phone,
+                    address: {
+                        raw: this.address,
+                        parsed: this.addressObject
+                    },
+                    email: this.email,
+                    image: this.image
+                }
+                console.log('saving edits:', newPatient)
+
+                var db = firebase.firestore();
+                db.doc(`patients/${this.patient.__id__}`).update(newPatient).then(response => {
+                    console.log('update patient successful!');
+                    if(!this.imageFile) return Promise.resolve('default');
+
+                    var storageRef = firebase.storage().ref();
+                    var patientImagesRef = storageRef.child(`patientProfilePictures/${this.patient.__id__}/${this.imageFile.name}`);
+                    return patientImagesRef.put(this.imageFile);
+                }).then(response => {
+                    console.log('uploaded image successfully:', response);
+                    if(response === 'default') return Promise.resolve();
+                    return db.doc(`patients/${this.patient.__id__}`).update({image: response.downloadURL});
+                }).then(response => {
+                    console.log('patient update successful!');
+                    this.$.toast.text = 'Sus cambios han sido guardados.';
+                    this.$.toast.open();
+                    this.waiting = false;
+                }).catch(err => {
+                    console.log('patient update ERROR:', err);
+                    this.waiting = false;
+                });
+            }
+
+        }
+
+        window.customElements.define(CreatePatient.is, CreatePatient);
+    </script>
+</dom-module>

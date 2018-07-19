@@ -15,7 +15,7 @@
             }
         </style>
 
-        <template is="dom-if" if={{_computeFabVisibility(drawerOpen,page)}}>
+        <template is="dom-if" if={{_computeFabVisibility(drawerOpen,page,dialogOpen)}}>
             <paper-fab icon="my-icons:add" on-click="_onFabClick"></paper-fab>
         </template>
 
@@ -44,21 +44,22 @@
             static get properties() {
                 return {
                     drawerOpen: Boolean,
-                    page: String
+                    page: String,
+                    dialogOpen: {
+                        type: Boolean,
+                        value: false
+                    }
                 };
             }
             
-            _computeFabVisibility(drawerOpen, page) {
-                return ((page==='pacientes' || page==='usuarios') && !drawerOpen)
+            _computeFabVisibility(drawerOpen, page, dialogOpen) {
+                return ((page==='optica') && !drawerOpen && !dialogOpen)
             }
 
             _onFabClick(e) {
                 switch (this.page) {
-                    case 'pacientes':
-                        this.dispatchEvent(new CustomEvent('open-dialog', {detail: {type: 'create', subType: 'patient'}}));
-                        break;
-                    case 'usuarios':
-                        this.dispatchEvent(new CustomEvent('open-dialog', {detail: {type: 'create', subType: 'user'}}));
+                    case 'optica':
+                        this.dispatchEvent(new CustomEvent('create-patient'));
                         break;
                     default:
                         break;

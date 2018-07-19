@@ -1,0 +1,135 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="../../../bower_components/valle-speed-dial/valle-speed-dial.html">
+<link rel="import" href="../../../bower_components/valle-speed-dial/valle-speed-dial-action.html">
+<link rel="lazy-import" href="complete-inventory/complete-inventory.html">
+
+<link rel="import" href="single-item.html">
+
+<dom-module id="catalogo-view">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            .empty-state {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 20px;
+            }
+
+            .fab {
+                position: fixed;
+                bottom: 72px;
+                right: 16px;
+                --valle-speed-dial-fab-color: var(--accent-color);
+                --valle-speed-dial-action-fab-color: white;
+                --valle-speed-dial-action-default-icon-color: var(--accent-color);
+            }
+        </style>
+
+        <template is="dom-repeat" items={{catalog}} 
+        as=item>
+            <single-item on-click="_onItemClick" item={{item}}></single-item>
+        </template>
+
+        <template is=dom-if if={{!catalog.length}}>
+            <div class=empty-state>No hay productos</div>
+        </template>
+
+        <valle-speed-dial id=speedFab class=fab icon="my-icons:bottom-sheet">
+            <valle-speed-dial-action on-click="_onCreateItemClick" icon="my-icons:add" label="crear producto" label-direction="left"></valle-speed-dial-action>
+            <valle-speed-dial-action on-click="_onCreateInventoryClick" icon="my-icons:inventory" label="crear inventario" label-direction="left"></valle-speed-dial-action>
+        </valle-speed-dial>
+
+        <complete-inventory id=completeInventory></complete-inventory>
+
+    </template>
+
+    <script>
+        /**
+         * `catalogo-view` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class CatalogoView extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'catalogo-view';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    catalog: {
+                        type: Array,
+                        collection: 'catalog',
+                        live: true,
+                        observer: '_catalogObserver'
+                    }
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _catalogObserver(catalog) {
+                console.log('catalog observer:', catalog)
+            }
+
+            _onItemClick(e) {
+                this.dispatchEvent(new CustomEvent('item-click', {detail: {pid: e.model.item['__id__']}, composed: true, bubbles: true}));
+            }
+
+            _onCreateItemClick(e) {
+                console.log('on create item click:', e);
+                this.dispatchEvent(new CustomEvent('create-item'));
+                this.$.speedFab._toggleShow();
+            }
+
+            _onCreateInventoryClick(e) {
+                console.log('on create inventory click:', e);
+                var resolvedDialogUrl = this.resolveUrl('complete-inventory/complete-inventory.html');
+                Polymer.importHref(
+                    resolvedDialogUrl,
+                        null,
+                        this.openInventoryDialog(),
+                        true);
+                this.$.speedFab._toggleShow();
+            }
+
+            openInventoryDialog() {
+                this.$.completeInventory.opened = true;
+            }
+
+        }
+
+        window.customElements.define(CatalogoView.is, CatalogoView);
+    </script>
+</dom-module>

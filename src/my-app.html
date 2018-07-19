@@ -36,10 +36,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <!-- lazy import views -->
 <link rel="lazy-import" href="views/optica-view/optica-view.html">
+<link rel="lazy-import" href="views/catalogo-view/catalogo-view.html">
 <link rel="lazy-import" href="views/error-view/error-view.html">
 
 <!-- lazy import updated dialogs -->
-<link rel="lazy-import" href="patient-details/patient-details.html">
+<link rel="lazy-import" href="details/patient-details/patient-details.html">
+<link rel="lazy-import" href="details/item-details/item-details.html">
+
+<link rel="lazy-import" href="dialogs/create-patient/create-patient.html">
+<link rel="lazy-import" href="dialogs/create-exam/create-exam.html">
+<link rel="lazy-import" href="dialogs/create-sale/create-sale.html">
+<link rel="lazy-import" href="dialogs/create-item/create-item.html">
 
 <!-- moment import -->
 <script src="../bower_components/moment/min/moment-with-locales.min.js"></script>
@@ -71,6 +78,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       iron-pages {
         flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
 
       .drawer-list {
@@ -138,29 +147,44 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       <!-- Main content -->
       <app-header-layout fullbleed has-scrolling-region>
-        <agave-toolbar slot="header" page={{page}} on-menu-click="_onMenuClick" on-close-details="_onCloseDialog" route="{{subroute}}"></agave-toolbar>
 
-        <template is="dom-if" if={{!patientVisible}}>
+        <agave-toolbar 
+        slot="header" page={{page}}  route="{{subroute}}" edit-state={{editState}}
+        on-menu-click="_onMenuClick" on-close-details="_onCloseDialog" 
+        on-edit-patient="_onEditPatient" on-delete-patient="_onDeletePatient" on-save-patient="_onSavePatient"></agave-toolbar>
+
+        <template is="dom-if" if={{!_computeIsDialogOpen(patientVisible,itemVisible)}}>
           <iron-pages
               selected="[[page]]"
               attr-for-selected="name"
               fallback-selection="error"
               role="main">
                 <optica-view on-patient-click="_onPatientClick" name=optica></optica-view>
+                <catalogo-view on-create-item="_onCreateItem" on-item-click="_onItemClick" name=catalogo></catalogo-view>
                 <error-view name=error></error-view>
           </iron-pages>
         </template>
         
-        <patient-details visible={{patientVisible}} route={{subroute}} id=patientDetails></patient-details>
+        <patient-details patient={{patient}} edit-state={{editState}} visible={{patientVisible}} route={{subroute}} id=patientDetails
+          on-create-exam="_onCreateExam" on-create-sale="_onCreateSale"></patient-details>
+
+        <item-details item={{item}} edit-state={{editState}} visible={{itemVisible}} route={{subroute}} id=itemDetails></item-details>
         
         <agave-bottom-toolbar selected-view={{routeData.page}}></agave-bottom-toolbar>
       </app-header-layout>
     </app-drawer-layout>
 
-    <agave-fab drawer-open={{drawerOpen}} page={{page}} on-open-dialog="_openDialogClick"></agave-fab>
+    <agave-fab drawer-open={{drawerOpen}} page={{page}} 
+      dialog-open={{_computeIsDialogOpen(patientVisible,itemVisible)}} 
+      on-create-patient="_onCreatePatient"
+      on-create-item="_onCreateItem"></agave-fab>
 
     <!-- dialogs -->
     <sign-in-dialog id=signInDialog on-sign-in="_onSignInEvent" opened={{!signedIn}}></sign-in-dialog>
+    <create-patient id=createPatient></create-patient>
+    <create-exam id="createExam"></create-exam>
+    <create-sale id=createSale></create-sale>
+    <create-item id=createItem></create-item>
     <!-- end dialogs -->
   </template>
 
@@ -220,15 +244,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         console.log('subroute observer:', subroute)
 
         if (!subroute.path) return;
-
         let extractedPid = (subroute.path).replace('/details/', '');
-        // Load dialog import on demand.
-        var resolvedDialogUrl = this.resolveUrl('patient-details/patient-details.html');
-            Polymer.importHref(
-              resolvedDialogUrl,
-              this._openPatientDetails(extractedPid),
-              null,
-              true);
+        var resolvedDialogUrl;
+
+        switch (this.page) {
+          case 'optica':
+            resolvedDialogUrl = this.resolveUrl('details/patient-details/patient-details.html');
+            // Load dialog import on demand.
+                Polymer.importHref(
+                  resolvedDialogUrl,
+                  this._openPatientDetails(extractedPid),
+                  null,
+                  true);
+            break;
+          case 'catalogo':
+            resolvedDialogUrl = this.resolveUrl('details/item-details/item-details.html');
+            // Load dialog import on demand.
+                Polymer.importHref(
+                  resolvedDialogUrl,
+                  this._openItemDetails(extractedPid),
+                  null,
+                  true);
+            break;
+        }
       }
 
       _routePageChanged(page) {
@@ -252,6 +290,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             null,
             this._showPage404.bind(this),
             true);
+            
       }
 
       loadAgavePendingOrdersIcon() {
@@ -292,7 +331,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _onAddNote(e) {
         console.log('on add note event received:', e.detail);
         var db = firebase.firestore();
-        db.doc(`pendingExams/${e.detail.id}`).update({
+        return db.doc(`pendingExams/${e.detail.id}`).update({
           'notes': e.detail.notes
         }).then(response => {
           console.log('add note successful!');
@@ -378,13 +417,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
       }
 
-      _onCloseDialog(e) {
-        this.patientVisible = false;
+      _onItemClick(e) {
+        // Load dialog import on demand.
+        var resolvedDialogUrl = this.resolveUrl('details/item-details/item-details.html');
+            Polymer.importHref(
+              resolvedDialogUrl,
+              this._openItemDetails(e.detail.pid),
+              null,
+              true);
+      }
+
+      _openItemDetails(pid) {
+        this.$.itemDetails.pid = pid;
+        this.$.itemDetails.visible = true;
       }
 
       _onPatientClick(e) {
         // Load dialog import on demand.
-        var resolvedDialogUrl = this.resolveUrl('patient-details/patient-details.html');
+        var resolvedDialogUrl = this.resolveUrl('details/patient-details/patient-details.html');
             Polymer.importHref(
               resolvedDialogUrl,
               this._openPatientDetails(e.detail.pid),
@@ -399,6 +449,129 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _patientVisibleObserver(patientVisible) {
         console.log('patient visible observer:', patientVisible)
+      }
+
+      _onEditPatient(e) {
+        switch (this.page) {
+          case 'optica':
+            console.log('on edit patient event:', this.patient)
+            var resolvedDialogUrl = this.resolveUrl('dialogs/create-patient/create-patient.html');
+            Polymer.importHref(
+              resolvedDialogUrl,
+                null,
+                this._openEditPatientDialog(this.patient),
+                true);
+            break;
+          case 'catalogo':
+            console.log('on edit item event:', this.item)
+            var resolvedDialogUrl = this.resolveUrl('dialogs/create-item/create-item.html');
+            Polymer.importHref(
+              resolvedDialogUrl,
+                null,
+                this._openEditItemDialog(this.item),
+                true);
+            break;
+        
+          default:
+            break;
+        }
+      }
+
+      _openEditPatientDialog(patient) {
+        this.$.createPatient.patient = patient;
+        this.$.createPatient.editState = true;
+        this.$.createPatient.opened = true;
+      }
+
+      _openEditItemDialog(item) {
+        this.$.createItem.item = item;
+        this.$.createItem.editState = true;
+        this.$.createItem.opened = true;
+      }
+
+      _onCreateSale(e) {
+        console.log('on create sale event:', e)
+        var resolvedDialogUrl = this.resolveUrl('dialogs/create-sale/create-sale.html');
+        Polymer.importHref(
+          resolvedDialogUrl,
+            null,
+            this._openCreateSaleDialog(e.detail, this.user),
+            true);
+      }
+
+      _openCreateSaleDialog(pid, user) {
+        this.$.createSale.user = user;
+        this.$.createSale.pid = pid;
+        this.$.createSale.opened = true;
+      }
+
+      _onCreateExam(e) {
+        console.log('on create exam event:', e)
+        var resolvedDialogUrl = this.resolveUrl('dialogs/create-exam/create-exam.html');
+        Polymer.importHref(
+          resolvedDialogUrl,
+            null,
+            this._openCreateExamDialog(e.detail, this.user),
+            true);
+      }
+
+      _openCreateExamDialog(pid, user) {
+        this.$.createExam.user = user;
+        this.$.createExam.pid = pid;
+        this.$.createExam.opened = true;
+      }
+
+      _onCreatePatient(e) {
+        console.log('on create patient event:', e)
+        var resolvedDialogUrl = this.resolveUrl('dialogs/create-patient/create-patient.html');
+        Polymer.importHref(
+          resolvedDialogUrl,
+            null,
+            this._openCreatePatientDialog(),
+            true);
+      }
+
+      _openCreatePatientDialog() {
+        this.$.createPatient.opened = true;
+      }
+
+      _onCreateItem(e) {
+        console.log('on create item event:', e)
+        var resolvedDialogUrl = this.resolveUrl('dialogs/create-item/create-item.html');
+        Polymer.importHref(
+          resolvedDialogUrl,
+            null,
+            this._openCreateItemDialog(),
+            true);
+      }
+
+      _openCreateItemDialog() {
+        this.$.createItem.opened = true;
+      }
+
+      _onCloseDialog(e) {
+        switch (this.page) {
+          case 'optica':
+            this.$.patientDetails.closeDialog();
+            break;
+          case 'catalogo':
+            this.$.itemDetails.closeDialog();
+            break;
+        }
+      }
+
+      _onDeletePatient(e) {
+        console.log('on delete patient event:', e)
+        this.$.patientDetails.deletePatient();
+      }
+
+      _onSavePatient(e) {
+        console.log('on save patient event:', e)
+        this.$.patientDetails.savePatient();
+      }
+
+      _computeIsDialogOpen(patientVisible, itemVisible) {
+        return (patientVisible || itemVisible);
       }
     }
 

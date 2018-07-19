@@ -32,7 +32,11 @@
     "moment-timezone": "^0.5.16",
     "paper-checkbox": "PolymerElements/paper-checkbox#^2.0.4",
     "paper-tabs": "PolymerElements/paper-tabs#^2.1.1",
-    "paper-badge": "PolymerElements/paper-badge#^2.1.0"
+    "paper-badge": "PolymerElements/paper-badge#^2.1.0",
+    "valle-speed-dial": "valleweb/valle-speed-dial#^1.1.0",
+    "datetime-picker": "fooloomanzoo/datetime-picker#^2.9.1",
+    "titanium-address-input": "LssPolymerElements/titanium-address-input#^2.0.27",
+    "paper-menu-button": "PolymerElements/paper-menu-button#^2.1.1"
   },
   "resolutions": {
     "polymer": "^2.0.0"

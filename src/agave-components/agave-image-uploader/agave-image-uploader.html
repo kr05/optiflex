@@ -1,0 +1,65 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="agave-image-uploader">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            #fileInput {
+                display: none;
+            }
+        </style>
+        <input type="file" accept="image/*" on-change="updateImage" id="fileInput">
+    </template>
+
+    <script>
+        class AgaveImageUploader extends Polymer.Element {
+            static get is() {
+                return 'agave-image-uploader';
+            }
+
+            static get properties() {
+                return {
+                    image: {
+                        type: String,
+                        notify: true
+                    },
+                    imageFile: {
+                        type: Object,
+                        notify: true
+                    }
+                };
+            }
+
+            selectImage(e) {
+                console.log('selecting image...')
+                this.$.fileInput.click();
+            }
+
+            updateImage(e) {
+                console.log('on image upload:', e.target.files)
+                let file = null;
+                let fileList = e.target.files;
+                for (let i = 0; i < fileList.length; i++) {
+                    if (fileList[i].type.match(/^image\//)) {
+                        file = fileList[i];
+                        break;
+                    }
+                }
+
+                console.log('current file:', file);
+                
+                if (file !== null) {
+                    let url = URL.createObjectURL(file);
+                    this.image = url;
+                    this.imageFile = file;
+                }
+            }
+
+        }
+
+        window.customElements.define(AgaveImageUploader.is, AgaveImageUploader);
+    </script>
+</dom-module>

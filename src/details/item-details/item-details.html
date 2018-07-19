@@ -1,0 +1,334 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../../bower_components/polymerfire/firebase-firestore-mixin.html">
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../single-receipt/single-receipt.html">
+<link rel="lazy-import" href="quick-inventory/quick-inventory.html">
+
+<dom-module id="item-details">
+    <template>
+        <style>
+            :host {
+                background-color: white;
+                display: none;
+            }
+
+            :host([visible]) {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+            }
+
+            .grid-container {
+                border-bottom: 1px solid #ccc;
+                padding: 24px;
+                display: grid;
+                grid-column-gap: 24px;
+                grid-template-columns: auto 1fr 1fr 1fr;
+                grid-template-rows: auto 1fr 1fr 1fr;
+                grid-template-areas: "image name name name" "image fc sc chip" "image fc sc chip" "image fc sc chip";
+            }
+
+            .image {
+                grid-area: image;
+                width: 200px;
+            }
+
+            img {
+                background-color: #ccc;
+                object-fit: cover;
+                object-position: center;
+                width: 100%;
+                max-height: 100%;
+            }
+
+            /* name */
+            .name {
+                grid-area: name;
+                font-size: 26px;
+                margin-bottom: 8px;
+            }
+            /* end name */
+            
+            .fc, .sc {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            /* first column */
+            .fc {
+                grid-area: fc;
+            }
+            /* first column end */
+            
+            .sc {
+                grid-area: sc;
+            }
+
+            .chip {
+                grid-area: chip;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            paper-tabs {
+                margin-top: -28px;
+                width: 75%;
+                align-self: center;
+                --paper-tabs-selection-bar-color: var(--dark-primary-color);
+            }
+
+            .selected-tab {
+                color: var(--dark-primary-color);
+            }
+
+            .fab {
+                align-self: flex-end;
+                margin-top: -28px;
+                margin-right: 24px;
+            }
+
+            .subtitle {
+                font-size: 12px;
+                color: var(--app-primary-color);
+            }
+
+            .last-subtitle {
+                margin-top: 16px;
+            }
+
+            .data {
+                font-size: 18px;
+            }
+
+            .empty-state {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 20px;
+            }
+        </style>
+
+        <app-route
+        route="{{route}}"
+        pattern="/details/:pid"
+        data="{{routeData}}"
+        tail="{{subroute}}">
+        </app-route>
+
+
+        <div class="grid-container">
+            <div class="image">
+                <img src="{{item.image}}">
+            </div>
+            <div class="name">
+                <div>{{_computeDisplay(item.make,item.model)}}</div>
+            </div>
+            <div class="fc">
+                <div class=subtitle>Costo</div>
+                <div class=data>${{item.cost}}</div>
+                <div class="subtitle last-subtitle">Precio</div>
+                <div class=data>${{item.price}}</div>
+            </div>
+            <div class="sc">
+                <div class=subtitle>Inventario</div>
+                <div class=data>{{item.inventory}}</div>
+                <div class="subtitle last-subtitle">Minimo</div>
+                <div class=data>0</div>
+            </div>    
+            <div class="chip">
+                <div class=subtitle>SKU</div>
+                <div class=data>{{item.sku}}</div>
+                <div class="subtitle last-subtitle">Descripcion</div>
+                <div class=data>{{item.description}}</div>
+            </div>
+        </div>    
+        <paper-fab class=fab icon="my-icons:inventory" on-click="_onCreateQuickInventory"></paper-fab>
+
+        <paper-tabs noink fallback-selection=ventas attr-for-selected=name selected-class="selected-tab" selected="{{selectedTab}}">
+        <paper-tab name=ventas>VENTAS</paper-tab>
+        <paper-tab name=inventarios>INVENTARIOS</paper-tab>
+        </paper-tabs>
+
+        <iron-pages attr-for-selected=name selected="{{selectedTab}}">
+        <section name="ventas">
+            <template is="dom-repeat" items={{receipts}} 
+                as=receipt>
+                <single-receipt receipt={{receipt}}></single-receipt>     
+            </template>
+            <template is=dom-if if={{!receipts.length}}>
+                <div class=empty-state>No hay ventas</div>
+            </template>
+        </section>
+        <section name=inventarios>
+            <template is="dom-repeat" items={{inventories}} 
+                as=inventory>  
+                <single-inventory inventory={{inventory}}></single-inventory>                 
+            </template>
+            <template is=dom-if if={{!inventories.length}}>
+                <div class=empty-state>No hay inventarios</div>
+            </template>
+        </section>
+        </iron-pages>
+
+        <paper-dialog id=confirmDialog>
+            <h2>Borrar producto</h2>
+            <div>¿Seguro que deseas borrar este producto? Esta accion no puede ser revertida.</div>
+            <div class=buttons>
+                <paper-button dialog-dismiss>Mejor no</paper-button>
+                <paper-button on-click="_onConfirmDeleteItem">Borrar producto</paper-button>
+            </div>
+        </paper-dialog>
+
+        <quick-inventory id=quickInventory item={{item}}></quick-inventory>
+
+        <paper-toast class=fit-bottom id="toast"></paper-toast>
+                
+
+    </template>
+
+    <script>
+        /**
+         * `item-details` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class ItemDetails extends Polymer.FirestoreMixin(Polymer.Element) {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'item-details';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+             static get properties() {
+                return {
+                    pid: {
+                        type: String,
+                        notify: true,
+                        observer: '_pidObserver'
+                    },
+                    editState: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    },
+                    route: {
+                        type: Object,
+                        observer: '_routeObserver',
+                        notify: true
+                    },
+                    visible: {
+                        type: Boolean,
+                        value: false,
+                        notify: true,
+                        reflectToAttribute: true,
+                        observer: '_visibleObserver'
+                    },
+                    item: {
+                        type: Object,
+                        doc: 'catalog/{pid}',
+                        live: true,
+                        notify: true
+                    },
+                    receipts: {
+                        type: Array,
+                        collection: 'receipts',
+                        live: true
+                    },
+                    inventories: {
+                        type: Array,
+                        collection: 'catalog/{pid}/inventories',
+                        live: true
+                    },
+                    routeData: Object,
+                    subroute: Object
+                };
+            }
+
+            _routeObserver(route) {
+                console.log('route:', route)
+                if(!route.path) {
+                    this.visible = false;
+                } else {
+                    let extractedPid = (route.path).replace('/details/', '');
+                    console.log('extracted pid:', extractedPid)
+                    if (!this.pid) this.pid = extractedPid;
+                    this.visible = true;
+                }
+            }
+
+            _visibleObserver(visible) {
+                console.log('visible observer:', visible);
+                if (visible) this.set('route.path', `/details/${this.pid}`)
+                if (!visible) this.set('route.path', "")
+            }
+
+            _pidObserver(pid) {
+                console.log('pid observer:', pid)
+                this.set('route.path', `/details/${pid}`)
+            }
+
+            deleteItem() {
+                if (!this.visible || !this.pid) return;
+                this.$.confirmDialog.open();
+            }
+
+            closeDialog() {
+                if (!this.visible || !this.pid) return;
+                if (this.editState) {
+                    this.editState = false;
+                } else {
+                    this.visible = false;
+                }
+            }
+            
+            _onConfirmDeleteItem(e) {
+                console.log('deleting item...')
+                var db = firebase.firestore();
+                return db.doc(`catalog/${this.pid}`).delete().then(response => {
+                    console.log('items delete SUCCESS:', response);
+                    this.visible = false;
+                }).catch(err => {
+                    console.log('item delete ERROR:', err)
+                });
+            }
+
+            _computeDisplay(make, model) {
+                return `${make} - ${model}`
+            }
+
+            _onCreateQuickInventory(e) {
+                console.log('on create quick inventory event:', e)
+                var resolvedDialogUrl = this.resolveUrl('quick-inventory/quick-inventory.html');
+                Polymer.importHref(
+                resolvedDialogUrl,
+                    null,
+                    this._openCreateQuickInventoryDialog(),
+                    true);
+            }
+
+            _openCreateQuickInventoryDialog(patient) {
+                this.$.quickInventory.opened = true;
+            }
+
+        }
+
+        window.customElements.define(ItemDetails.is, ItemDetails);
+    </script>
+</dom-module>
