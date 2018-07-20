@@ -9,6 +9,8 @@
 <link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../single-receipt/single-receipt.html">
+<link rel="import" href="single-details-inventory/single-details-inventory.html">
+
 <link rel="lazy-import" href="quick-inventory/quick-inventory.html">
 
 <dom-module id="item-details">
@@ -172,7 +174,7 @@
         <section name=inventarios>
             <template is="dom-repeat" items={{inventories}} 
                 as=inventory>  
-                <single-inventory inventory={{inventory}}></single-inventory>                 
+                <single-details-inventory inventory={{inventory}}></single-details-inventory>                 
             </template>
             <template is=dom-if if={{!inventories.length}}>
                 <div class=empty-state>No hay inventarios</div>
@@ -253,8 +255,11 @@
                     },
                     inventories: {
                         type: Array,
-                        collection: 'catalog/{pid}/inventories',
-                        live: true
+                        collection: 'inventories',
+                        live: true,
+                        query: (q, el) => {
+                            return q.orderBy('createdAt', 'desc')
+                        }
                     },
                     routeData: Object,
                     subroute: Object

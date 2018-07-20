@@ -1,13 +1,13 @@
 <link rel="import" href="../../../../bower_components/polymer/polymer-element.html">
 
-<dom-module id="single-exam">
+<dom-module id="single-details-inventory">
     <template>
         <style>
             :host {
                 display: flex;
                 align-items: center;
                 padding: 16px 0;
-                margin-left: 80px;
+                margin-left: 80px; 
                 border-bottom: 1px solid #ccc;
             }
             
@@ -19,36 +19,36 @@
                 font-size: 14px;
             }
 
-            .doctor-name {
+            .executioner {
                 text-transform: capitalize;
             }
-
         </style>
 
         <div class="fc">
-            <div>{{_computeDate(exam.createdAt)}}</div>
-            <div class=subtitle>{{_computeShortId(exam.__id__)}}</div>
+            <div>{{_computeDate(inventory.createdAt)}}</div>
+            <div class=subtitle>{{_computeShortId(inventory.__id__)}}</div>
         </div>
-        <div class="subtitle doctor-name">{{exam.executioner.name}}</div>
-        <div class=subtitle>{{_computeExamType(exam.type)}}</div>
+        <div class="subtitle executioner">{{inventory.executioner.name}}</div>
+        <div class=subtitle>{{_computeExamType(inventory.type)}}</div>
         
+
     </template>
 
     <script>
         /**
-         * `single-exam` Description
+         * `single-details-inventory` Description
          *
          * @summary ShortDescription.
          * @customElement
          * @polymer
          * @extends {Polymer.Element}
          */
-        class SingleExam extends Polymer.Element {
+        class SingleDetailsInventory extends Polymer.Element {
             /**
              * String providing the tag name to register the element under.
              */
             static get is() {
-                return 'single-exam';
+                return 'single-details-inventory';
             }
 
             /**
@@ -56,7 +56,7 @@
              */
             static get properties() {
                 return {
-                    exam: Object
+                    inventory: Object
                 };
             }
 
@@ -72,12 +72,15 @@
 
             _computeExamType(type) {
                 switch (type) {
-                    case 'basic':
-                        return 'Optometria basica';
+                    case 'quick':
+                        return 'Individual';
+                    case 'complete':
+                        return 'Completo';
                 }
             }
+
         }
 
-        window.customElements.define(SingleExam.is, SingleExam);
+        window.customElements.define(SingleDetailsInventory.is, SingleDetailsInventory);
     </script>
 </dom-module>

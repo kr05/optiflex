@@ -114,9 +114,9 @@
                 </div>
             </div>
             <div class="border-inputs">
-                <agave-border-input always-float label=Costo value={{cost}}></agave-border-input>
-                <agave-border-input always-float label=Precio value={{price}}></agave-border-input>
-                <agave-border-input always-float class=qty-input label=Inventario value={{quantity}}></agave-border-input>
+                <agave-border-input type="number" always-float label=Costo value={{cost}}></agave-border-input>
+                <agave-border-input type="number" always-float label=Precio value={{price}}></agave-border-input>
+                <agave-border-input disabled={{editState}} type="number" always-float class=qty-input label=Inventario value={{quantity}}></agave-border-input>
                 <agave-border-input always-float class=desc-input label=Descripcion value={{description}}></agave-border-input>
             </div>
             <div class="buttons">
@@ -285,9 +285,9 @@
                     make: this.make,
                     model: this.model,
                     sku: this.sku,
-                    cost: this.cost,
-                    price: this.price,
-                    inventory: this.quantity
+                    cost: (parseFloat(this.cost)).toFixed(2),
+                    price: (parseFloat(this.price)).toFixed(2),
+                    inventory: parseInt(this.quantity, 10)
                 }
                 
                 //todo: change this check to server
@@ -298,7 +298,6 @@
                 if (this.description) newItem['description'] = this.description;
 
                 console.log('new item:', newItem)
-
 
                 var db = firebase.firestore();
                 var itemRef = db.collection('catalog').doc();

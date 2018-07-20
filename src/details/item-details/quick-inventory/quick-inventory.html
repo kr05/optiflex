@@ -168,6 +168,58 @@
             _computeSubmitButtonText(waiting) {
                 return (waiting ? 'Creando inventario rapido...' : 'GUARDAR')
             }
+
+            _onSubmit(e) {
+                this.waiting = true;
+                console.log('submitting inventory:', e);
+
+                if(this.nullInputs()) {
+                    this.waiting = false;
+                    return;
+                };
+
+                //If user is null, exit.
+                var user = firebase.auth().currentUser;
+                if (user == null) {
+                    this.waiting = false;
+                    this.$.toast.text = 'Usuario no autorizado.';
+                    this.$.toast.open();
+                    return;
+                }
+
+                const updatedInventory = parseInt(this.inventory, 10);
+                
+                //User is not null, which means user is correctly authenticated.
+                var newInventory = {
+                    previous: this.item.inventory,
+                    updated: updatedInventory,
+                    executioner: {
+                        uid: user.uid,
+                        name: user.displayName
+                    },
+                    createdAt: moment().valueOf(),
+                    type: 'quick',
+                    iid: this.item.__id__
+                }
+
+                var db = firebase.firestore();
+                var inventoriesRef = db.collection('inventories');
+                var itemRef = db.doc(`catalog/${this.item.__id__}`);
+
+                return inventoriesRef.add(newInventory).then(response => {
+                    console.log('single inventory added:', response)
+                    return itemRef.update({inventory: updatedInventory});
+                }).then(response => {
+                    console.log('item inventory updated:', response)
+                    this.waiting = false;
+                    this.cancelDialog();
+                }).catch(err => {
+                    this.waiting = false;
+                    this.$.toast.text = 'No se a podido finalizar el inventario.';
+                    this.$.toast.open();
+                    console.log('ERR:', err)
+                });
+            }
         }
 
         window.customElements.define(QuickInventory.is, QuickInventory);

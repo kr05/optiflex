@@ -54,7 +54,7 @@
         </style>
 
         <span class$={{_computeSpanClass(value,focused,alwaysFloat,noLabel)}}>{{label}}</span>
-        <paper-input focused={{focused}} no-label-float value={{value}} label="{{_computeLabel(alwaysFloat,label,noLabel)}}"></paper-input>
+        <paper-input disabled={{disabled}} readonly={{readonly}} type={{type}} focused={{focused}} no-label-float value={{value}} label="{{_computeLabel(alwaysFloat,label,noLabel)}}"></paper-input>
 
     </template>
 
@@ -92,7 +92,20 @@
                     noLabel: {
                         type: Boolean,
                         value: false
+                    },
+                    type: {
+                        type: String,
+                        value: 'text'
+                    },
+                    readonly: {
+                        type: Boolean,
+                        value: false
+                    },
+                    disabled: {
+                        type: Boolean,
+                        value: false
                     }
+                    
                 };
             }
 
