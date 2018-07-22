@@ -26,13 +26,13 @@
             }
         </style>
 
-        <paper-tabs fallback-selection=pacientes attr-for-selected=name selected-class="selected-tab" selected="{{selectedTab}}" fit-container>
+        <paper-tabs fallback-selection=pacientes attr-for-selected=name selected-class="selected-tab" selected="{{subview}}" fit-container>
             <paper-tab name=pacientes><span id=opticaTab>PACIENTES</span></paper-tab>
             <paper-tab name=ordenes><span id=catalogoTab>ORDENES</span></paper-tab>
         </paper-tabs>
 
         
-        <iron-pages attr-for-selected=name selected="{{selectedTab}}">
+        <iron-pages attr-for-selected=name selected="{{subview}}">
             <section name=pacientes>
                 <pacientes-tab></pacientes-tab>
             </section>
@@ -66,7 +66,10 @@
              */
             static get properties() {
                 return {
-                    
+                    subview: {
+                        type: String,
+                        notify: true
+                    }
                 };
             }
 

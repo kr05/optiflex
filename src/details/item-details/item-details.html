@@ -54,7 +54,7 @@
             /* name */
             .name {
                 grid-area: name;
-                font-size: 26px;
+                font-size: 24px;
                 margin-bottom: 8px;
             }
             /* end name */
@@ -109,7 +109,7 @@
             }
 
             .data {
-                font-size: 18px;
+                font-size: 16px;
             }
 
             .empty-state {
@@ -117,6 +117,17 @@
                 align-items: center;
                 justify-content: center;
                 padding: 10px 20px;
+            }
+
+            #confirmDialog paper-button {
+                padding: 12px 16px;
+                font-weight: 500;
+                letter-spacing: 1.25px;
+            }
+
+            #confirmDialog .confirm-btn {
+                background-color: red;
+                color: whitesmoke;
             }
         </style>
 
@@ -184,10 +195,10 @@
 
         <paper-dialog id=confirmDialog>
             <h2>Borrar producto</h2>
-            <div>¿Seguro que deseas borrar este producto? Esta accion no puede ser revertida.</div>
+            <div>¿Seguro que deseas borrar este producto?<br>Esta accion no puede ser revertida.</div>
             <div class=buttons>
                 <paper-button dialog-dismiss>Mejor no</paper-button>
-                <paper-button on-click="_onConfirmDeleteItem">Borrar producto</paper-button>
+                <paper-button class=confirm-btn on-click="_onConfirmDeleteItem">Borrar</paper-button>
             </div>
         </paper-dialog>
 

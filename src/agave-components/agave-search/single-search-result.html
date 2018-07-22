@@ -1,0 +1,101 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="single-search-result">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                align-items: center;
+                padding: 8px;
+            }
+
+            .details-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: space-around;
+            }
+
+            .title {
+                font-size: 16px;
+            }
+
+            .subtitle {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.7);
+            }
+
+            img {
+                width: 48px;
+                height: 48px;
+                background: var(--image-background-color);
+                border-radius: 3px;
+                margin-right: 16px;
+                object-fit: cover;
+            }
+        </style>
+
+        <img src={{result.image}} class=profile-picture></img>
+        <div class=details-container>
+            <div class=title>{{result.make}} - {{result.model}}</div>
+            <div class=subtitle>{{_computeShortId(result.objectID)}}</div>
+        </div>
+
+    </template>
+
+    <script>
+        /**
+         * `single-search-result` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SingleSearchResult extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'single-search-result';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    result: Object
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _computeShortId(id) {
+                return (id ? id.slice(-6) : '');
+            }
+
+        }
+
+        window.customElements.define(SingleSearchResult.is, SingleSearchResult);
+    </script>
+</dom-module>

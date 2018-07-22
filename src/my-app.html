@@ -52,6 +52,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <script src="../bower_components/moment/min/moment-with-locales.min.js"></script>
 <script src="../bower_components/lodash/lodash.min.js"></script>
 
+<script src="../bower_components/algoliasearch/dist/algoliasearch.min.js"></script>
+
 <dom-module id="my-app">
   <template>
     <style>
@@ -149,7 +151,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <app-header-layout fullbleed has-scrolling-region>
 
         <agave-toolbar 
-        slot="header" page={{page}}  route="{{subroute}}" edit-state={{editState}}
+        slot="header" page={{page}}  route="{{subroute}}" edit-state={{editState}} optica-subview={{opticaSubview}}
         on-menu-click="_onMenuClick" on-close-details="_onCloseDialog" 
         on-edit-patient="_onEditPatient" on-delete-patient="_onDeletePatient" on-save-patient="_onSavePatient"></agave-toolbar>
 
@@ -159,7 +161,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               attr-for-selected="name"
               fallback-selection="error"
               role="main">
-                <optica-view on-patient-click="_onPatientClick" name=optica></optica-view>
+                <optica-view subview={{opticaSubview}} on-patient-click="_onPatientClick" name=optica></optica-view>
                 <catalogo-view on-create-item="_onCreateItem" on-item-click="_onItemClick" name=catalogo></catalogo-view>
                 <error-view name=error></error-view>
           </iron-pages>
@@ -561,8 +563,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _onDeletePatient(e) {
-        console.log('on delete patient event:', e)
-        this.$.patientDetails.deletePatient();
+        switch (this.page) {
+          case 'optica':
+            console.log('on delete patient event:', this.patient)
+            this.$.patientDetails.deletePatient();
+            break;
+          case 'catalogo':
+            console.log('on delete item event:', this.item)
+            this.$.itemDetails.deleteItem();
+            break;
+        
+          default:
+            break;
+        }
       }
 
       _onSavePatient(e) {

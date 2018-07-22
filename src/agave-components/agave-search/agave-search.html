@@ -1,0 +1,159 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="search-results.html">
+
+<dom-module id="agave-search">
+    <template>
+        <style>
+            :host {
+                display: flex;
+                flex-direction: column;
+            }
+
+            iron-icon {
+                color: rgba(0, 0, 0, 0.54);
+                margin-right: 8px;
+            }
+
+            paper-input {
+                box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);                
+                --paper-input-container-underline-focus: {
+                    display: none;
+                };
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container: {
+                    background-color: white;
+                    padding: 8px;
+                };
+            }
+
+            search-results {
+                position: absolute;
+                place-self: flex-end;
+                margin-top: 56px;
+            }
+        </style>
+
+        <paper-input no-label-float placeholder="{{placeholder}}" value={{query}}><iron-icon icon="my-icons:search" slot="prefix"></iron-icon></paper-input>
+       
+        <template is=dom-if if={{results.length}}>
+            <search-results results={{results}}></search-results>
+        </template>
+
+
+        </template>
+
+    </template>
+
+    <script>
+        /**
+         * `agave-search` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class AgaveSearch extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'agave-search';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    page: String,
+                    query: String,
+                    placeholder: String,
+                    algoliaIndex: {
+                        type: Array,
+                        observer: '_onAlgoliaIndexObserver',
+                        value: []
+                    },
+                    results: {
+                        type: Array,
+                        notify: true
+                    },
+                    index: String,
+                    appId: String,
+                    searchKey: String
+                };
+            }
+
+            static get observers() {
+                return [
+                    // Observer method name, followed by a list of dependencies, in parenthesis,
+                    '_search(query,algoliaIndex.*)',
+                    '_indexObserver(index,appId,searchKey)'
+                ]
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+                
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+            _computePlaceholder(page) {
+                switch (page) {
+                    case 'optica':
+                        return 'Buscar pacientes, ordenes...'
+                    case 'catalogo':
+                        return 'Buscar productos, servicios...'
+                    default:
+                        return 'Buscar...'
+                }
+            }
+
+            _search(query, index) {
+                if(!query || !index.base) {
+                    // console.log('unable to search:', query, index)
+                    if(this.results && !this.results.length) return;
+                    this.set('results', []);
+                    return;
+                }
+                
+                console.log('searching:', query, index.base);
+                (index.base[this.index]).search(query, (err, content) => {
+                    this.set('results', content.hits);
+                });
+            }
+
+            _onAlgoliaIndexObserver(index) {
+                console.log('algolia index observer:', index);
+            }
+
+            _indexObserver(index, appId, searchKey) {
+                if (!index || !appId || !searchKey) return;
+                var client = algoliasearch(appId, searchKey);
+                this.algoliaIndex[index] = null;
+                this.algoliaIndex[index] = client.initIndex(index);
+            }
+         }
+
+        window.customElements.define(AgaveSearch.is, AgaveSearch);
+    </script>
+</dom-module>

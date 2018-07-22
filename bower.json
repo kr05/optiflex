@@ -36,7 +36,8 @@
     "valle-speed-dial": "valleweb/valle-speed-dial#^1.1.0",
     "datetime-picker": "fooloomanzoo/datetime-picker#^2.9.1",
     "titanium-address-input": "LssPolymerElements/titanium-address-input#^2.0.27",
-    "paper-menu-button": "PolymerElements/paper-menu-button#^2.1.1"
+    "paper-menu-button": "PolymerElements/paper-menu-button#^2.1.1",
+    "algoliasearch": "^3.29.0"
   },
   "resolutions": {
     "polymer": "^2.0.0"

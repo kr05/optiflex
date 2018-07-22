@@ -73,8 +73,7 @@
                     catalog: {
                         type: Array,
                         collection: 'catalog',
-                        live: true,
-                        observer: '_catalogObserver'
+                        live: true
                     }
                 };
             }
@@ -93,14 +92,8 @@
              */
             ready() {
                 super.ready();
-
                 Polymer.RenderStatus.afterNextRender(this, function() {
-                    
                 });
-            }
-
-            _catalogObserver(catalog) {
-                console.log('catalog observer:', catalog)
             }
 
             _onItemClick(e) {

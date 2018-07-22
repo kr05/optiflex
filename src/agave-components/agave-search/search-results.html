@@ -1,0 +1,79 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="single-search-result.html">
+
+<dom-module id="search-results">
+    <template>
+        <style>
+            :host {
+                display: block
+            }
+
+            .search-container {
+                background-color: white;
+                color: black;
+                box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);  
+            }
+        </style>
+
+        <div class=search-container>
+            <template is=dom-repeat items={{results}} as="result">
+                <single-search-result result={{result}}></single-search-result>
+            </template>
+            <template is=dom-if if={{!results.length}}>
+                <div>0 resultados</div>
+            </template>
+        </div>
+
+    </template>
+
+    <script>
+        /**
+         * `search-results` Description
+         *
+         * @summary ShortDescription.
+         * @customElement
+         * @polymer
+         * @extends {Polymer.Element}
+         */
+        class SearchResults extends Polymer.Element {
+            /**
+             * String providing the tag name to register the element under.
+             */
+            static get is() {
+                return 'search-results';
+            }
+
+            /**
+             * Object describing property-related metadata used by Polymer features
+             */
+            static get properties() {
+                return {
+                    results: Object
+                };
+            }
+
+            /**
+             * Instance of the element is created/upgraded. Use: initializing state,
+             * set up event listeners, create shadow dom.
+             * @constructor
+             */
+            constructor() {
+                super();
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+            ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    
+                });
+            }
+
+        }
+
+        window.customElements.define(SearchResults.is, SearchResults);
+    </script>
+</dom-module>

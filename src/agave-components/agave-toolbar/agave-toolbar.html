@@ -6,6 +6,7 @@
 <link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../../../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../agave-components/agave-search/agave-search.html">
 
 <dom-module id="agave-toolbar">
     <template>
@@ -33,6 +34,10 @@
                 color: white;
                 background-color: var(--app-accent-color);
             }
+
+            agave-search {
+                flex: 1;
+            }
         </style>
 
         
@@ -40,9 +45,13 @@
             <app-toolbar>
                 <paper-icon-button icon="{{_computeIcon(state)}}" on-click="_onIconClick"></paper-icon-button>
                 <div main-title>{{_computePage(state,page)}}</div>
+
+                <template is="dom-if" if={{_computeShouldShowSearch(page,state)}}>
+                    <agave-search app-id="YS3OXIYY7K" search-key="c3287f0cfa81ceaf471e2692eb540fb1" index="dev_catalog" 
+                    page={{page}} query={{searchQuery}} placeholder={{_computePlaceholder(page,opticaSubview)}} results={{results}}></agave-search>
+                </template>
                 
                 <template is="dom-if" if={{_computeIsPatientDetailsOpen(state)}}>
-                    
                     <template is="dom-if" if={{!editState}}>
                         <paper-icon-button icon="my-icons:edit" on-click="_onEditPatientClick"></paper-icon-button>
                         <paper-menu-button close-on-activate dynamic-align no-overlap vertical-align="bottom">
@@ -97,7 +106,13 @@
                         notify: true,
                         computed: '_computeState(route.path)'
                     },
-                    editState: Boolean
+                    editState: Boolean,
+                    searchQuery: String,
+                    results: {
+                        type: Array,
+                        observer: '_resultsObserver'
+                    },
+                    opticaSubview: String
                 };
             }
 
@@ -115,7 +130,6 @@
              */
             ready() {
                 super.ready();
-
                 Polymer.RenderStatus.afterNextRender(this, function() {
                     
                 });
@@ -203,6 +217,27 @@
             _onSavePatientEdits(e) {
                 console.log('save patient click:', e)
                 this.dispatchEvent(new CustomEvent('save-patient'))
+            }
+
+            _computeShouldShowSearch(page, state) {
+                console.log('computing should show search:', page, state)
+                if (state === 'details') return false;
+                return ((page === 'optica' || page === 'catalogo'));
+            }
+
+            _computePlaceholder(page, opticaSubview) {
+                switch (page) {
+                    case 'optica':
+                        return (opticaSubview === 'pacientes' ? 'Buscar pacientes...' : 'Buscar ordenes...');
+                    case 'catalogo':
+                        return 'Buscar productos...'
+                    default:
+                        return 'Buscar...'
+                }
+            }
+
+            _resultsObserver(results) {
+                console.log('search results:', results)
             }
 
         }
