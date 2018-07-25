@@ -52,6 +52,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <script src="../bower_components/moment/min/moment-with-locales.min.js"></script>
 <script src="../bower_components/lodash/lodash.min.js"></script>
 
+<!-- algolia import -->
 <script src="../bower_components/algoliasearch/dist/algoliasearch.min.js"></script>
 
 <dom-module id="my-app">
@@ -151,9 +152,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <app-header-layout fullbleed has-scrolling-region>
 
         <agave-toolbar 
-        slot="header" page={{page}}  route="{{subroute}}" edit-state={{editState}} optica-subview={{opticaSubview}}
+        slot="header" page={{page}}  route="{{subroute}}" edit-state={{editState}} optica-subview={{opticaSubview}} search-query={{searchQuery}}
         on-menu-click="_onMenuClick" on-close-details="_onCloseDialog" 
-        on-edit-patient="_onEditPatient" on-delete-patient="_onDeletePatient" on-save-patient="_onSavePatient"></agave-toolbar>
+        on-edit-patient="_onEditPatient" on-delete-patient="_onDeletePatient" on-save-patient="_onSavePatient" on-single-search-click="_onSingleSearchClick"></agave-toolbar>
 
         <template is="dom-if" if={{!_computeIsDialogOpen(patientVisible,itemVisible)}}>
           <iron-pages
@@ -169,7 +170,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         
         <patient-details patient={{patient}} edit-state={{editState}} visible={{patientVisible}} route={{subroute}} id=patientDetails
           on-create-exam="_onCreateExam" on-create-sale="_onCreateSale"></patient-details>
-
         <item-details item={{item}} edit-state={{editState}} visible={{itemVisible}} route={{subroute}} id=itemDetails></item-details>
         
         <agave-bottom-toolbar selected-view={{routeData.page}}></agave-bottom-toolbar>
@@ -435,6 +435,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _onPatientClick(e) {
+        console.log('on patient click:', e)
         // Load dialog import on demand.
         var resolvedDialogUrl = this.resolveUrl('details/patient-details/patient-details.html');
             Polymer.importHref(
@@ -585,6 +586,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _computeIsDialogOpen(patientVisible, itemVisible) {
         return (patientVisible || itemVisible);
+      }
+
+      _onSingleSearchClick(e) {
+        console.log('on single search click:', e.detail)
+        this.searchQuery = null;
+
+        switch (e.detail.index) {
+          case 'dev_catalog':
+            this._onItemClick({detail: {pid: e.detail.objectID}});
+            break;
+          case 'dev_patients':
+            this._onPatientClick({detail: {pid: e.detail.objectID}});
+            break;
+          case 'dev_orders':
+            break;
+        }
       }
     }
 

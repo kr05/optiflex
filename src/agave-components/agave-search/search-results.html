@@ -13,14 +13,22 @@
                 color: black;
                 box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);  
             }
+
+            .empty {
+                height: 48px;
+                padding: 16px;
+                display: flex;
+                font-size: 16px;
+                align-items: center;
+            }
         </style>
 
         <div class=search-container>
-            <template is=dom-repeat items={{results}} as="result">
-                <single-search-result result={{result}}></single-search-result>
+            <template is=dom-repeat items={{results}} as="result" index-as="resultIndex">
+                <single-search-result on-click="_onSingleSearchClick" index={{index}} result={{result}}></single-search-result>
             </template>
             <template is=dom-if if={{!results.length}}>
-                <div>0 resultados</div>
+                <div class=empty>0 resultados</div>
             </template>
         </div>
 
@@ -48,7 +56,8 @@
              */
             static get properties() {
                 return {
-                    results: Object
+                    results: Object,
+                    index: String
                 };
             }
 
@@ -70,6 +79,10 @@
                 Polymer.RenderStatus.afterNextRender(this, function() {
                     
                 });
+            }
+
+            _onSingleSearchClick(e) {
+                this.dispatchEvent(new CustomEvent('single-search-click', {detail: {objectID: e.model.result.objectID, index: this.index, result: e.model.result}, bubbles: true, composed: true}));
             }
 
         }

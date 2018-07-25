@@ -6,7 +6,7 @@
             :host {
                 display: flex;
                 align-items: center;
-                padding: 8px;
+                padding: 16px;
             }
 
             .details-container {
@@ -38,7 +38,7 @@
 
         <img src={{result.image}} class=profile-picture></img>
         <div class=details-container>
-            <div class=title>{{result.make}} - {{result.model}}</div>
+            <div class=title>{{_computeDisplayName(index,result)}}</div>
             <div class=subtitle>{{_computeShortId(result.objectID)}}</div>
         </div>
 
@@ -66,7 +66,8 @@
              */
             static get properties() {
                 return {
-                    result: Object
+                    result: Object,
+                    index: String
                 };
             }
 
@@ -92,6 +93,18 @@
 
             _computeShortId(id) {
                 return (id ? id.slice(-6) : '');
+            }
+
+            _computeDisplayName(index, result) {
+                console.log('computing display name:', index, result)
+                switch (index) {
+                    case 'dev_catalog':
+                        return `${result.make} - ${result.model}`
+                    case 'dev_patients':
+                        return `${result.name}`
+                    case 'dev_orders':
+                        return `${result.name}`
+                }
             }
 
         }

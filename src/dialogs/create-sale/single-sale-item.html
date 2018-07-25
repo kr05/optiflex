@@ -1,4 +1,6 @@
 <link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+
 
 <dom-module id="single-sale-item">
     <template>
@@ -6,20 +8,24 @@
             :host {
                 display: flex;
                 border-top: 1px solid #ccc;
+                align-items: center;
             }
 
-            .fc {
-                height: 70px;
-                width: 70px;
+            img {
+                height: 48px;
+                width: 48px;
                 background-color: #ccc;
-                margin-right: 8px;
+                margin-right: 16px;
+                background: var(--image-background-color);
+                border-radius: 3px;
+                object-fit: cover;
             }
 
             .sc {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
-                justify-content: space-between;
+                justify-content: center;
             }
 
             .sc .product {
@@ -38,23 +44,30 @@
 
             .lc .total {
                 margin-left: 16px;
+                margin-right: 24px;
+            }
+
+            paper-icon-button {
+                color: red;
             }
 
 
         </style>
 
-        <div class=fc></div>
+        <img src="{{item.image}}">
         <div class="sc">
-            <div class=product>Marca - modelo</div>
-            <div>XS</div>
-            <div>SKU: eofv09345nj3d4</div>
+            <div class=product>{{item.make}} - {{item.model}}</div>
+            <div>SKU: {{item.sku}}</div>
         </div>
         <div class="lc">
-            <span>$112.00</span>
+            <span>${{item.price}}</span>
             <span>x</span>
-            <span>2</span>
-            <span class=total>$224.00</span>
+            <span>{{item.quantity}}</span>
+            <span class=total>${{_computeTotal(item.price,item.quantity)}}</span>
         </div>
+        
+        <paper-icon-button on-click="_onDeleteSaleItemClick" icon="my-icons:close"></paper-icon-button>
+        
 
     </template>
 
@@ -106,6 +119,21 @@
                 Polymer.RenderStatus.afterNextRender(this, function() {
                     
                 });
+            }
+
+            _computeShortId(id) {
+                return (id ? id.slice(-6) : '');
+            }
+
+            _computeTotal(cost, quantity) {
+                let parsedCost = parseInt(cost, 10);
+                let parsedQuantity = parseInt(quantity, 10);
+
+                return (parsedCost*parsedQuantity).toFixed(0);
+            }
+
+            _onDeleteSaleItemClick(e) {
+                this.dispatchEvent(new CustomEvent('delete-sale-item'))
             }
 
         }

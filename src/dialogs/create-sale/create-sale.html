@@ -1,9 +1,11 @@
 <link rel="import" href="../../../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../agave-components/agave-search/agave-search.html">
 <link rel="import" href="../dialog-styles/dialog-styles.html">
 <link rel="import" href="single-sale-item.html">
 
@@ -23,6 +25,11 @@
 
             single-sale-item {
                 padding: 16px 24px;
+                margin-top: 0;
+            }
+
+            single-sale-item:last-of-type {
+                border-bottom: 1px solid #ccc;
             }
 
             paper-input {
@@ -113,18 +120,66 @@
                 letter-spacing: 1.25px;
             }
 
+            .header {
+                margin-bottom: 24px;
+                display: grid;
+                /* height: 100%; */
+                grid-template-columns: 1fr 1fr 1fr;
+                grid-template-rows: 1fr;
+                grid-gap: 1px;
+                grid-template-areas: "placeholder title button";
+            }
+
+            .placeholder {
+                grid-area: placeholder;
+            }
+
+            .title {
+                grid-area: title;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .button {
+                grid-area: button;
+                display:flex;
+                justify-content: flex-end;
+            }
+
+            .button agave-search {
+                outline: 1px solid var(--dark-primary-color);
+                width: 100%;
+                z-index: 1;
+                text-align: start;
+                --agave-search-icon-color: var(--dark-primary-color);
+                --agave-search-input-color: var(--dark-primary-color);
+                --agave-search-placeholder-color: var(--dark-primary-color);
+            }
+
+            .empty {
+                text-align: center;
+            }
+
         </style>
 
         <paper-dialog id=dialog modal opened={{opened}}> 
-            <div class="header">Crear venta</div>
+            <div class="header">
+                <div class=title>Crear venta</div>
+                
+                <div class="button">
+                    <agave-search id=search app-id="XULJIFQGAA" search-key="89e975e443d5c641b433bbe426a90287" index="dev_catalog" 
+                        query={{searchQuery}} placeholder="Buscar producto..." on-single-search-click="_onSingleSearchClick"></agave-search>    
+                </div>
+            </div>
 
             <template is="dom-repeat" items={{items}} 
                 as=item>
-                <single-sale-item item={{item}}></single-sale-item>
+                <single-sale-item on-delete-sale-item="_onDeleteSaleItem" item={{item}}></single-sale-item>
             </template>
             
             <template is="dom-if" if={{!items.length}}>
-                <single-sale-item no-items></single-sale-item>
+                <div class="empty">Agregue un producto para continuar...</div>
             </template>
 
             <div class="br">
@@ -135,15 +190,15 @@
                 <div class="payment-info">
                     <div>
                         <span>Subtotal</span>
-                        <span>$234.23</span>
+                        <span>${{subtotal}}</span>
                     </div>
                     <div>
                         <span>Impuestos</span>
-                        <span>$0.00</span>
+                        <span>${{tax}}</span>
                     </div>
                     <div class=total>
                         <span>Total</span>
-                        <span>$234.23</span>
+                        <span>${{total}}</span>
                     </div>
                     <div class=payment>
                         <span>Pago</span>
@@ -198,29 +253,29 @@
                     pid: String,
                     items: {
                         type: Array,
-                        value: []
+                        value: [],
+                        notify: true
+                    },
+                    searchState: {
+                        type: Boolean,
+                        value: false,
+                        observer: '_searchStateObserver'
+                    },
+                    subtotal: {
+                        type: Number,
+                        value: 0,
+                        computed: '_computeSubtotal(items.splices)'
+                    },
+                    tax: {
+                        type: Number,
+                        value: 0
+                    },
+                    total: {
+                        type: Number,
+                        value: 0,
+                        computed: '_computeTotal(tax,subtotal)'
                     }
                 };
-            }
-
-            /**
-             * Instance of the element is created/upgraded. Use: initializing state,
-             * set up event listeners, create shadow dom.
-             * @constructor
-             */
-            constructor() {
-                super();
-            }
-
-            /**
-             * Use for one-time configuration of your component after local DOM is initialized. 
-             */
-            ready() {
-                super.ready();
-
-                Polymer.RenderStatus.afterNextRender(this, function() {
-                    
-                });
             }
 
             _openedObserver(opened) {
@@ -231,6 +286,7 @@
             resetInputs() {
                 this.waiting = false
                 this.user = {}
+                this.searchState = false
                 this.pid = null
                 this.items = []
 
@@ -238,6 +294,55 @@
 
             _computeSubmitButtonText(waiting) {
                 return (waiting ? 'Creando examen...' : 'capturar pago')
+            }
+
+            _onAddProductClick(e) {
+                this.searchState = true;
+                // this.shadowRoot.querySelector('search').focusInput();
+            }
+
+            _searchStateObserver(searchState) {
+                console.log('search state observer:', searchState);
+            }
+
+            _onSingleSearchClick(e) {
+                console.log('on single search click event:', e.detail)
+                console.log('items:', this.items)
+                var result = e.detail.result;
+                result['quantity'] = 1;
+                delete result['_highlightResult'];
+                this.push('items', result)
+                this.searchQuery = null;
+            }
+
+            _computeSubtotal(changeRecord) {
+                if(!changeRecord) return 0;
+                console.log('computing subtotal:', changeRecord);
+                let splices = changeRecord.indexSplices;
+                var subtotal = this.subtotal;
+                splices.forEach(splice => {
+                    let idx = splice.index;
+                    if(splice.removed.length) {
+                        var removedItems = splice.removed;
+                        removedItems.forEach(removedItem => {
+                            subtotal -= parseInt(removedItem.price, 10);
+                        });
+                    } else if (splice.addedCount !== 0) {
+                        var item = splice.object[idx];
+                        subtotal += parseInt(item.price, 10);
+                    }
+                });
+                return subtotal;
+            }
+
+            _computeTotal(tax, subtotal) {
+                console.log('computing total:', tax, subtotal);
+                return (tax+subtotal);
+            }
+
+            _onDeleteSaleItem(e) {
+                console.log('delete sale item event:', e);
+                this.splice('items', e.model.index, 1);
             }
 
         }

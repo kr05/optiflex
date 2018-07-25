@@ -47,8 +47,8 @@
                 <div main-title>{{_computePage(state,page)}}</div>
 
                 <template is="dom-if" if={{_computeShouldShowSearch(page,state)}}>
-                    <agave-search app-id="YS3OXIYY7K" search-key="c3287f0cfa81ceaf471e2692eb540fb1" index="dev_catalog" 
-                    page={{page}} query={{searchQuery}} placeholder={{_computePlaceholder(page,opticaSubview)}} results={{results}}></agave-search>
+                    <agave-search raised app-id="XULJIFQGAA" search-key="89e975e443d5c641b433bbe426a90287" index="{{_computeSearchIndex(page,opticaSubview)}}" 
+                    query={{searchQuery}} placeholder={{_computePlaceholder(page,opticaSubview)}}></agave-search>
                 </template>
                 
                 <template is="dom-if" if={{_computeIsPatientDetailsOpen(state)}}>
@@ -107,10 +107,9 @@
                         computed: '_computeState(route.path)'
                     },
                     editState: Boolean,
-                    searchQuery: String,
-                    results: {
-                        type: Array,
-                        observer: '_resultsObserver'
+                    searchQuery: {
+                        type: String,
+                        notify: true
                     },
                     opticaSubview: String
                 };
@@ -225,21 +224,26 @@
                 return ((page === 'optica' || page === 'catalogo'));
             }
 
+            _computeSearchIndex(page, opticaSubview) {
+                console.log('computing search index:', page, opticaSubview)
+                switch (page) {
+                    case 'optica':
+                        return (opticaSubview === 'pacientes' ? 'dev_patients' : 'dev_orders');
+                    case 'catalogo':
+                        return 'dev_catalog';
+                }
+            }
+
             _computePlaceholder(page, opticaSubview) {
                 switch (page) {
                     case 'optica':
                         return (opticaSubview === 'pacientes' ? 'Buscar pacientes...' : 'Buscar ordenes...');
                     case 'catalogo':
-                        return 'Buscar productos...'
+                        return 'Buscar productos...';
                     default:
-                        return 'Buscar...'
+                        return 'Buscar...';
                 }
             }
-
-            _resultsObserver(results) {
-                console.log('search results:', results)
-            }
-
         }
 
         window.customElements.define(AgaveToolbar.is, AgaveToolbar);
