@@ -502,9 +502,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             true);
       }
 
-      _openCreateSaleDialog(pid, user) {
+      _openCreateSaleDialog(e, user) {
         this.$.createSale.user = user;
-        this.$.createSale.pid = pid;
+        this.$.createSale.pid = e.pid;
+        this.$.createSale.patient = e.patient;
+        this.$.createSale.pendingExams = e.exams;
         this.$.createSale.opened = true;
       }
 

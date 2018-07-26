@@ -287,14 +287,13 @@
                         name: this.user.displayName
                     },
                     type: 'basic',
-                    finished: false,
                     createdAt: moment().valueOf() 
                 }
 
                 console.log('submitting exam results:', examResults);
 
                 var db = firebase.firestore();
-                db.collection(`patients/${this.pid}/exams`).add(examResults)
+                db.collection('pendingExams').add(examResults)
                     .then(docRef => {
                         console.log('exam added successfully:', docRef);
                         this.waiting = false;

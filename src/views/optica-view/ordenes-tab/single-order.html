@@ -60,10 +60,10 @@
 
         </style>
 
-        <img src={{order.image}} class=profile-picture></img>
+        <img src={{order.patient.image}} class=profile-picture></img>
         <div class=details-container>
-            <div>{{order.name}}</div>
-            <div class=subtitle>{{_computeDate(order.states.create-exam)}}</div>
+            <div>{{order.patient.name}}</div>
+            <div class=subtitle>{{_computeDate(order.saleDetails.createdAt)}}</div>
         </div>
         <div class=rc-content>
             <div class=subtitle>{{_computeShortId(order.__id__)}}</div>

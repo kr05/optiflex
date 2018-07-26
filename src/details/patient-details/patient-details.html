@@ -105,7 +105,8 @@
             }
 
             .fab {
-                margin-bottom: -59px;
+                position: absolute;
+                top: 243px;
                 --valle-speed-dial-fab-color: var(--accent-color);
                 --valle-speed-dial-action-fab-color: white;
                 --valle-speed-dial-action-default-icon-color: var(--accent-color);
@@ -172,7 +173,11 @@
                     <div class=data>{{patient.address.raw}}</div>
                 </div>    
             <div class="chip">
-                <span><iron-icon icon="my-icons:catalog"></iron-icon>XD5456</span>
+                <template is="dom-repeat" items={{pendingOrders}} 
+                    as=pendingOrder>
+                    <span><iron-icon icon="my-icons:catalog"></iron-icon>{{_computeShortId(pendingOrder.__id__)}}</span>
+                </template>
+                
                 <valle-speed-dial id=speedFab class=fab icon="my-icons:bottom-sheet">
                     <valle-speed-dial-action on-click="_onCreateExamClick" icon="my-icons:vision" label="crear examen" label-direction="left"></valle-speed-dial-action>
                     <valle-speed-dial-action on-click="_onCreateSaleClick" icon="my-icons:cart" label="crear venta" label-direction="left"></valle-speed-dial-action>
@@ -285,6 +290,26 @@
                         collection: 'patients/{pid}/orders',
                         live: true
                     },
+                    pendingExams: {
+                        type: Array,
+                        collection: 'pendingExams',
+                        live: true,
+                        query: (q, el) => {
+                            q = q.orderBy('createdAt', 'desc').where('pid', '==', el.pid);
+                            return q;
+                        },
+                        observes: ['pid']
+                    },
+                    pendingOrders: {
+                        type: Array,
+                        collection: 'pendingOrders',
+                        live: true,
+                        query: (q, el) => {
+                            q = q.orderBy('createdAt', 'desc').where('pid', '==', el.pid);
+                            return q;
+                        },
+                        observes: ['pid']
+                    },
                     routeData: Object,
                     subroute: Object
                 };
@@ -315,7 +340,7 @@
 
             _onCreateSaleClick(e) {
                 console.log('on create sale click:', e);
-                this.dispatchEvent(new CustomEvent('create-sale', {detail: this.pid}));
+                this.dispatchEvent(new CustomEvent('create-sale', {detail: {pid: this.pid, patient: this.patient, exams: this.pendingExams}}));
                 this.$.speedFab._toggleShow();
             }
 
@@ -352,6 +377,10 @@
 
             _computeInputClass(editState) {
                 return (editState ? 'edit' : 'display')
+            }
+
+            _computeShortId(id) {
+                return (id ? id.slice(-6) : '');
             }
 
         }

@@ -5,6 +5,9 @@
 <link rel="import" href="../../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../bower_components/paper-input/paper-textarea.html">
 <link rel="import" href="../../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../../agave-components/agave-search/agave-search.html">
 <link rel="import" href="../dialog-styles/dialog-styles.html">
 <link rel="import" href="single-sale-item.html">
@@ -84,8 +87,15 @@
             
             .notes-container > div {
                 font-size: 16px;
-                margin-left: 4px;
                 color: #767676;
+                display: flex;
+                align-items: center;
+            }
+            
+            .notes-container > div > iron-icon {
+                color: var(--app-primary-color);
+                margin-right: 8px;
+                margin-bottom: 2px;
             }
 
             .payment-info {
@@ -111,7 +121,7 @@
             }
 
             .buttons {
-                margin: 16px 12px;
+                margin: 8px 12px;
             }
 
             paper-button {
@@ -161,6 +171,19 @@
                 text-align: center;
             }
 
+            paper-dropdown-menu {
+                margin-bottom: 16px;
+                width: 250px;
+                border: 1px solid #767676;
+                border-radius: 5px;
+                --paper-input-container-underline: {
+                    display: none;
+                };
+                --paper-input-container: {
+                    padding: 8px;
+                };
+            }
+
         </style>
 
         <paper-dialog id=dialog modal opened={{opened}}> 
@@ -184,8 +207,17 @@
 
             <div class="br">
                 <div class="notes-container">
-                    <div>Nota</div>
-                    <paper-textarea max-rows=4 no-label-float value={{note}} label="Agregar nota..."></paper-textarea>
+                    <div><iron-icon icon="my-icons:vision"></iron-icon>Examen de vista</div>
+                    <paper-dropdown-menu no-label-float>
+                        <paper-listbox slot="dropdown-content" selected="{{selectedExam}}">
+                            <template is="dom-repeat" items={{pendingExams}} 
+                                as=pendingExam>
+                                <paper-item>{{_computeExamType(pendingExam.type)}} - {{_computeShortId(pendingExam.__id__)}}</paper-item>
+                            </template>
+                        </paper-listbox>
+                    </paper-dropdown-menu>
+                    <div>Notas</div>
+                    <paper-textarea max-rows=4 no-label-float value={{note}}></paper-textarea>
                 </div>
                 <div class="payment-info">
                     <div>
@@ -209,7 +241,7 @@
                  
             <div class="buttons">
                 <paper-button class=dismiss-btn dialog-dismiss>cancelar</paper-button>
-                <paper-button class=submit-btn disabled=[[waiting]] on-click="_onCreateExamClick">{{_computeSubmitButtonText(waiting)}}</paper-button>
+                <paper-button class=submit-btn disabled=[[waiting]] on-click="_onCreateSaleClick">{{_computeSubmitButtonText(waiting)}}</paper-button>
             </div>
         </paper-dialog>
         <paper-toast class=fit-bottom id="toast"></paper-toast>
@@ -270,12 +302,32 @@
                         type: Number,
                         value: 0
                     },
+                    payment: {
+                        type: Number,
+                        value: 0
+                    },
                     total: {
                         type: Number,
                         value: 0,
                         computed: '_computeTotal(tax,subtotal)'
-                    }
+                    },
+                    note: String,
+                    payment: Number,
+                    patient: Object,
+                    pendingExams: Array,
+                    selectedExam: String
                 };
+            }
+
+            /**
+             * Use for one-time configuration of your component after local DOM is initialized. 
+             */
+             ready() {
+                super.ready();
+
+                Polymer.RenderStatus.afterNextRender(this, function() {
+                    this.$.toast.fitInto = this.$.dialog; 
+                });
             }
 
             _openedObserver(opened) {
@@ -286,9 +338,14 @@
             resetInputs() {
                 this.waiting = false
                 this.user = {}
+                this.patient = {}
                 this.searchState = false
+                this.selectedExam = null
                 this.pid = null
+                this.pendingExams = []
                 this.items = []
+                this.note = null
+                this.payment = 0
 
             }
 
@@ -343,6 +400,95 @@
             _onDeleteSaleItem(e) {
                 console.log('delete sale item event:', e);
                 this.splice('items', e.model.index, 1);
+            }
+
+            _onCreateSaleClick(e) {
+                this.waiting = true;
+                if(this.nullInputs()) {
+                    this.waiting = false;
+                    return;
+                }
+                let selectedExam = this.pendingExams[this.selectedExam];
+                delete selectedExam['__id__'];
+
+                let curPayment = (!this.payment || isNaN(this.payment) ? 0 : parseInt(this.payment, 10));
+                let curTotal = parseInt(this.total, 10);
+                let isFinished = (curTotal === curPayment);
+
+                if (!this.isPaymentValid(curTotal, curPayment)) {
+                    this.$.toast.text = 'El pago es mayor que el total.';
+                    this.$.toast.open();
+                    this.waiting = false;
+                    return;
+                }
+
+                var newSale = {
+                    items: this.items,
+                    exam: selectedExam,
+                    patient: {
+                        name: this.patient.name,
+                        image: this.patient.image,
+                        pid: this.patient.__id__
+                    },
+                    saleDetails: {
+                        createdAt: moment().valueOf(),
+                        finished: isFinished,
+                        subtotal: this.subtotal,
+                        tax: this.tax,
+                        total: this.total,
+                        payments: [
+                            {
+                                payment: curPayment,
+                                timestamp: moment().valueOf()
+                            }
+                        ]
+                    }
+                }
+                if (this.note) newSale['notes'] = this.note;
+                console.log('new sale:', newSale)
+
+                var db = firebase.firestore();
+                db.collection('pendingOrders').add(newSale)
+                    .then(docRef => {
+                        console.log('exam added successfully:', docRef);
+                        this.waiting = false;
+                        this.opened = false;                
+                    }).catch(err => {
+                        console.log('exam update ERROR:', err);
+                        this.$.toast.text = 'No se a podido crear la venta.';
+                        this.$.toast.open();
+                        this.waiting = false;
+                    });
+
+            }
+
+            nullInputs() {
+                switch (true) {
+                    case (!this.items.length):
+                        this.$.toast.text = 'Por favor agregue un producto...';
+                        this.$.toast.open();
+                        return true;
+                    case (!this.selectedExam && this.selectedExam !== 0):
+                        this.$.toast.text = 'Por favor seleccione un examen de vista...';
+                        this.$.toast.open();
+                        return true;
+                }
+                return false;
+            }
+
+            isPaymentValid(total, payment) {
+                return (payment <= total);
+            }
+
+            _computeShortId(id) {
+                return (id ? id.slice(-6) : '');
+            }
+
+            _computeExamType(type) {
+                switch (type) {
+                    case 'basic':
+                        return 'Optometria basica';
+                }
             }
 
         }
