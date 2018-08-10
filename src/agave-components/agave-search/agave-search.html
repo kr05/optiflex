@@ -99,6 +99,7 @@
                 return [
                     // Observer method name, followed by a list of dependencies, in parenthesis,
                     '_search(query)',
+                    '_indexObserver(index)'
                     // '_indexObserver(index,appId,searchKey)'
                 ]
             }
@@ -119,6 +120,10 @@
 
             _onAlgoliaIndexObserver(index) {
                 console.log('algolia index observer:', index);
+            }
+
+            _indexObserver(index) {
+                this.query = null;
             }
          }
 

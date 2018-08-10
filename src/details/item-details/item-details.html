@@ -300,11 +300,6 @@
                 this.set('route.path', `/details/${pid}`)
             }
 
-            deleteItem() {
-                if (!this.visible || !this.pid) return;
-                this.$.confirmDialog.open();
-            }
-
             closeDialog() {
                 if (!this.visible || !this.pid) return;
                 if (this.editState) {
@@ -312,6 +307,11 @@
                 } else {
                     this.visible = false;
                 }
+            }
+
+            deleteItem() {
+                if (!this.visible || !this.pid) return;
+                this.$.confirmDialog.open();
             }
             
             _onConfirmDeleteItem(e) {

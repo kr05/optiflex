@@ -162,7 +162,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               attr-for-selected="name"
               fallback-selection="error"
               role="main">
-                <optica-view subview={{opticaSubview}} on-patient-click="_onPatientClick" name=optica></optica-view>
+                <optica-view subview={{opticaSubview}} on-order-click="_onOrderClick" on-patient-click="_onPatientClick" name=optica></optica-view>
                 <catalogo-view on-create-item="_onCreateItem" on-item-click="_onItemClick" name=catalogo></catalogo-view>
                 <error-view name=error></error-view>
           </iron-pages>
@@ -171,7 +171,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <patient-details patient={{patient}} edit-state={{editState}} visible={{patientVisible}} route={{subroute}} id=patientDetails
           on-create-exam="_onCreateExam" on-create-sale="_onCreateSale"></patient-details>
         <item-details item={{item}} edit-state={{editState}} visible={{itemVisible}} route={{subroute}} id=itemDetails></item-details>
-        
         <agave-bottom-toolbar selected-view={{routeData.page}}></agave-bottom-toolbar>
       </app-header-layout>
     </app-drawer-layout>

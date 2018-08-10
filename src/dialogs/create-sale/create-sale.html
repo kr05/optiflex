@@ -11,6 +11,7 @@
 <link rel="import" href="../../agave-components/agave-search/agave-search.html">
 <link rel="import" href="../dialog-styles/dialog-styles.html">
 <link rel="import" href="single-sale-item.html">
+<link rel="import" href="../../agave-components/agave-border-input/agave-border-input.html">
 
 <dom-module id="create-sale">
     <template>
@@ -54,7 +55,7 @@
                 border: 1px solid #767676;
                 border-radius: 5px;
                 margin: 2px;
-                width: 250px;
+                margin-top: 16px;
                 --paper-input-container-underline-focus: {
                     display: none;
                 };
@@ -81,8 +82,8 @@
             }
 
             .notes-container {
-                align-items: flex-start;
-                flex: 2;
+                margin-right: 120px;
+                flex: 1;
             }
             
             .notes-container > div {
@@ -169,11 +170,24 @@
 
             .empty {
                 text-align: center;
+                margin: 16px 0;
+            }
+
+            .exam-details {
+                display: flex;
+                flex-direction: column;
+                height: 152px;
+            }
+
+            .inputs {
+                display: flex;
+            }
+
+            .subtitle {
+                margin-top: 16px;
             }
 
             paper-dropdown-menu {
-                margin-bottom: 16px;
-                width: 250px;
                 border: 1px solid #767676;
                 border-radius: 5px;
                 --paper-input-container-underline: {
@@ -184,16 +198,24 @@
                 };
             }
 
+            .single-exam-value {
+                text-align: center;
+                margin: 0 8px 0 0;
+            }
+
         </style>
 
         <paper-dialog id=dialog modal opened={{opened}}> 
             <div class="header">
                 <div class=title>Crear venta</div>
                 
-                <div class="button">
-                    <agave-search id=search app-id="XULJIFQGAA" search-key="89e975e443d5c641b433bbe426a90287" index="dev_catalog" 
-                        query={{searchQuery}} placeholder="Buscar producto..." on-single-search-click="_onSingleSearchClick"></agave-search>    
-                </div>
+                <template is="dom-if" if={{!editState}}>
+                    <div class="button">
+                        <agave-search id=search app-id="XULJIFQGAA" search-key="89e975e443d5c641b433bbe426a90287" index="dev_catalog" 
+                            query={{searchQuery}} placeholder="Buscar producto..." on-single-search-click="_onSingleSearchClick"></agave-search>    
+                    </div>    
+                </template>
+                
             </div>
 
             <template is="dom-repeat" items={{items}} 
@@ -208,17 +230,78 @@
             <div class="br">
                 <div class="notes-container">
                     <div><iron-icon icon="my-icons:vision"></iron-icon>Examen de vista</div>
-                    <paper-dropdown-menu no-label-float>
-                        <paper-listbox slot="dropdown-content" selected="{{selectedExam}}">
-                            <template is="dom-repeat" items={{pendingExams}} 
-                                as=pendingExam>
-                                <paper-item>{{_computeExamType(pendingExam.type)}} - {{_computeShortId(pendingExam.__id__)}}</paper-item>
-                            </template>
-                        </paper-listbox>
-                    </paper-dropdown-menu>
-                    <div>Notas</div>
-                    <paper-textarea max-rows=4 no-label-float value={{note}}></paper-textarea>
-                </div>
+                    
+                    <template is="dom-if" if={{!editState}}>
+                        <paper-dropdown-menu no-label-float>
+                            <paper-listbox slot="dropdown-content" selected="{{selectedExam}}">
+                                <template is="dom-repeat" items={{pendingExams}} 
+                                    as=pendingExam>
+                                    <paper-item>{{_computeExamType(pendingExam.type)}} - {{_computeShortId(pendingExam.__id__)}}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>    
+                    </template>
+                    
+                    <div class="exam-details">
+                        <div class="subtitle">Graduacion ojo derecho</div>
+                        <div class="inputs">
+                            <div class=single-exam-value>
+                                <div>Esfera</div>
+                                <div>{{exam.right.esfera}}</div>
+                            </div>
+                            <div class=single-exam-value>
+                                <div>Cilindro</div>
+                                <div>{{exam.right.cilindro}}</div>
+                            </div>
+                            <div class=single-exam-value>
+                                <div>Eje</div>
+                                <div>{{exam.right.eje}}</div>
+                            </div>
+                            <div class=single-exam-value>
+                                <div>Cilindro</div>
+                                <div>{{exam.right.adicion}}</div>
+                            </div>
+                            <div class=single-exam-value>
+                                <div>DIP</div>
+                                <div>{{exam.right.dip}}</div>
+                            </div>
+                            <div class=single-exam-value>
+                                <div>Altura</div>
+                                <div>{{exam.right.altura}}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="subtitle">Graduacion ojo izquierdo</div>
+                        <div class="inputs">
+                            <div class=single-exam-value>
+                                <div>Esfera</div>
+                                <div>{{exam.left.esfera}}</div>
+                            </div>
+                            <div class=single-exam-value>
+                                <div>Cilindro</div>
+                                <div>{{exam.left.cilindro}}</div>
+                            </div>
+                            <div class=single-exam-value>
+                                <div>Eje</div>
+                                <div>{{exam.left.eje}}</div>
+                            </div>
+                            <div class=single-exam-value>
+                                <div>Cilindro</div>
+                                <div>{{exam.left.adicion}}</div>
+                            </div>
+                            <div class=single-exam-value>
+                                <div>DIP</div>
+                                <div>{{exam.left.dip}}</div>
+                            </div>
+                            <div class=single-exam-value>
+                                <div>Altura</div>
+                                <div>{{exam.left.altura}}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <div>Notas</div>
+                    <paper-textarea max-rows=4 no-label-float value={{note}}></paper-textarea> -->
+                </div>  
                 <div class="payment-info">
                     <div>
                         <span>Subtotal</span>
@@ -276,6 +359,10 @@
                         notify: true,
                         observer: '_openedObserver'
                     },
+                    editState: {
+                        type: Boolean,
+                        value: false
+                    },
                     waiting: {
                         type: Boolean,
                         value: false,
@@ -311,11 +398,18 @@
                         value: 0,
                         computed: '_computeTotal(tax,subtotal)'
                     },
+                    exam: {
+                        type: Object,
+                        value: {}
+                    },
                     note: String,
                     payment: Number,
                     patient: Object,
                     pendingExams: Array,
-                    selectedExam: String
+                    selectedExam: {
+                        type: String,
+                        observer: '_selectedExamObserver'
+                    }
                 };
             }
 
@@ -328,6 +422,11 @@
                 Polymer.RenderStatus.afterNextRender(this, function() {
                     this.$.toast.fitInto = this.$.dialog; 
                 });
+            }
+
+            _selectedExamObserver(selectedExam) {
+                if (!selectedExam && selectedExam !== 0) return;
+                this.exam = this.pendingExams[this.selectedExam];
             }
 
             _openedObserver(opened) {
@@ -346,6 +445,7 @@
                 this.items = []
                 this.note = null
                 this.payment = 0
+                this.exam = null
 
             }
 
@@ -422,6 +522,17 @@
                     return;
                 }
 
+                var states = {}
+                states['order-created'] = moment().valueOf();
+                
+                // enables firestore queries
+                states['lab-order-received'] = 0;
+                states['lab-order-ready'] = 0;
+                states['order-received'] = 0;
+                states['order-paid'] = 0;
+                states['order-ready'] = 0;
+                states['order-finished'] = 0;
+
                 var newSale = {
                     items: this.items,
                     exam: selectedExam,
@@ -442,7 +553,8 @@
                                 timestamp: moment().valueOf()
                             }
                         ]
-                    }
+                    },
+                    states: states
                 }
                 if (this.note) newSale['notes'] = this.note;
                 console.log('new sale:', newSale)

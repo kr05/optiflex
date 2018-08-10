@@ -9,6 +9,7 @@
                 padding: 8px 32px 8px 16px;
                 border-bottom: 1px solid var(--light-border);
                 align-items: center;
+                height: 60px;
             }
 
             .details-container {
@@ -60,7 +61,7 @@
 
         </style>
 
-        <img src={{order.patient.image}} class=profile-picture></img>
+        <!-- <img src={{order.patient.image}} class=profile-picture></img> -->
         <div class=details-container>
             <div>{{order.patient.name}}</div>
             <div class=subtitle>{{_computeDate(order.saleDetails.createdAt)}}</div>
@@ -68,7 +69,7 @@
         <div class=rc-content>
             <div class=subtitle>{{_computeShortId(order.__id__)}}</div>
             <div class=balance>{{_computeRemainingBalance(order.saleDetails.payments.length,order.saleDetails)}}</div>
-            <div class="label">Laboratorio</div>
+            <div class="label">{{_computeState(order.states)}}</div>
         </div>
 
         
@@ -133,6 +134,13 @@
                 console.log('payment total:', paymentTotal)
 
                 return `$${total - paymentTotal}`;
+            }
+
+            _computeState(states) {
+                console.log('computing order state:', states);
+                if (states['order-received'] && states['order-paid']) return 'Listo';
+                if (states['order-received'] && !states['order-paid']) return 'Pago pendiente';
+                return 'En proceso';  
             }
 
         }

@@ -36,7 +36,7 @@
             }
         </style>
 
-        <img src={{result.image}} class=profile-picture></img>
+        <img src={{_computeImage(index,result)}} class=profile-picture></img>
         <div class=details-container>
             <div class=title>{{_computeDisplayName(index,result)}}</div>
             <div class=subtitle>{{_computeShortId(result.objectID)}}</div>
@@ -103,7 +103,21 @@
                     case 'dev_patients':
                         return `${result.name}`
                     case 'dev_orders':
-                        return `${result.name}`
+                        if (!result.patient) return;
+                        return `${result.patient.name}`
+                }
+            }
+
+            _computeImage(index, result) {
+                console.log('computing display name:', index, result)
+                switch (index) {
+                    case 'dev_catalog':
+                        return result.image;
+                    case 'dev_patients':
+                        return result.image;
+                    case 'dev_orders':
+                        if (!result.patient) return;
+                        return result.patient.image;
                 }
             }
 
